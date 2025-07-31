@@ -17,34 +17,54 @@ export default defineConfig({
  
     tsconfigPaths(),
     VitePWA({
-      registerType: 'manual',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg'],
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: '薪资计算器',
         short_name: '薪资计算',
-        description: '专业的薪资计算和管理工具，支持离线使用',
-        theme_color: '#8B5CF6',
+        description: '智能薪资计算工具，支持加班费计算、历史记录管理和数据可视化',
+        theme_color: '#8b5cf6',
         background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
         scope: '/salary-calculator/',
         start_url: '/salary-calculator/',
+        lang: 'zh-CN',
+        categories: ['productivity', 'finance', 'utilities'],
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/salary-calculator/pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
+            src: '/salary-calculator/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          },
+          {
+            src: '/salary-calculator/icon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          }
+        ],
+        shortcuts: [
+          {
+            name: '薪资计算',
+            short_name: '计算',
+            description: '快速计算薪资',
+            url: '/salary-calculator/?page=calculator',
+            icons: [{ src: '/salary-calculator/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+          },
+          {
+            name: '历史记录',
+            short_name: '历史',
+            description: '查看薪资历史记录',
+            url: '/salary-calculator/?page=history',
+            icons: [{ src: '/salary-calculator/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           }
         ]
       },
@@ -53,9 +73,12 @@ export default defineConfig({
         type: 'module'
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/salary-calculator/',
-        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
+        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/, /^\/salary-calculator\/api\//],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
