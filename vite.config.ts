@@ -18,7 +18,13 @@ export default defineConfig({
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        '/salary-calculator/favicon.svg',
+        '/salary-calculator/apple-touch-icon.svg',
+        '/salary-calculator/icon.svg',
+        '/salary-calculator/pwa-192x192.png',
+        '/salary-calculator/pwa-512x512.png'
+      ],
       manifest: {
         name: '薪资计算器',
         short_name: '薪资计算',
@@ -66,7 +72,8 @@ export default defineConfig({
             url: '/salary-calculator/?page=history',
             icons: [{ src: '/salary-calculator/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           }
-        ]
+        ],
+        prefer_related_applications: false
       },
       devOptions: {
         enabled: true,
@@ -74,7 +81,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/salary-calculator/',
+        navigateFallback: '/salary-calculator/index.html',
         navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/, /^\/salary-calculator\/api\//],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
