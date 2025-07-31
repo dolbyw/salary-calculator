@@ -1,10 +1,12 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { useTouchDevice, useHapticFeedback } from '../../hooks/useTouchDevice';
 
 interface ClayButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
+  hapticFeedback?: boolean;
 }
 
 /**
@@ -16,8 +18,23 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
   children,
   className,
   disabled,
+  hapticFeedback = true,
+  onClick,
   ...props
 }) => {
+  const { isTouchDevice, isMobile } = useTouchDevice();
+  const { triggerHaptic } = useHapticFeedback();
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    
+    // 触觉反馈
+    if (hapticFeedback && isTouchDevice) {
+      triggerHaptic('light');
+    }
+    
+    onClick?.(e);
+  };
   const variantStyles = {
     primary: {
       base: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white',
@@ -46,9 +63,15 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
   };
 
   const sizeStyles = {
-    sm: 'px-4 py-2 text-sm rounded-xl',
-    md: 'px-6 py-3 text-base rounded-2xl',
-    lg: 'px-8 py-4 text-lg rounded-3xl',
+    sm: isTouchDevice 
+      ? (isMobile ? 'px-5 py-3 text-sm rounded-xl min-h-[44px]' : 'px-4 py-2.5 text-sm rounded-xl min-h-[40px]')
+      : 'px-4 py-2 text-sm rounded-xl',
+    md: isTouchDevice 
+      ? (isMobile ? 'px-7 py-4 text-base rounded-2xl min-h-[48px]' : 'px-6 py-3.5 text-base rounded-2xl min-h-[44px]')
+      : 'px-6 py-3 text-base rounded-2xl',
+    lg: isTouchDevice 
+      ? (isMobile ? 'px-9 py-5 text-lg rounded-3xl min-h-[52px]' : 'px-8 py-4.5 text-lg rounded-3xl min-h-[48px]')
+      : 'px-8 py-4 text-lg rounded-3xl',
   };
 
   const currentVariant = variantStyles[variant];
@@ -57,20 +80,31 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
     <button
       {...props}
       disabled={disabled}
+      onClick={handleClick}
       className={cn(
         // 基础样式
         'font-medium transition-all duration-200 ease-out',
         'transform-gpu will-change-transform',
         'focus:outline-none focus:ring-0',
+        // 触屏优化
+        isTouchDevice && [
+          'touch-manipulation', // 优化触屏响应
+          'select-none', // 防止文本选择
+          'active:scale-95', // 触屏按压反馈
+          !disabled && 'active:brightness-110'
+        ],
+        // 鼠标设备的悬停效果
+        !isTouchDevice && !disabled && [
+          'hover:scale-105',
+          'active:scale-95'
+        ],
         // 尺寸
         sizeStyles[size],
         // 变体样式
         currentVariant.base,
         currentVariant.shadow,
-        !disabled && currentVariant.hover,
+        !disabled && !isTouchDevice && currentVariant.hover,
         !disabled && currentVariant.active,
-        // 悬停和按压效果
-        !disabled && 'hover:scale-105 active:scale-95',
         // 禁用状态
         disabled && 'opacity-50 cursor-not-allowed',
         className

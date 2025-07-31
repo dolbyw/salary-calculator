@@ -4,8 +4,10 @@ import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayButton } from './ui/ClayButton';
 import { MonthSelector } from './ui/MonthSelector';
 import { useSalaryStore, calculateSalaryDetails } from '../store/salaryStore';
+import { useTouchDevice, useHapticFeedback } from '../hooks/useTouchDevice';
 import { PieChart as PieChartIcon, TrendingUp, BarChart3, Download, Image } from 'lucide-react';
 import { ChartData, MonthlySalaryStats } from '../types/salary';
+import { cn } from '../lib/utils';
 import html2canvas from 'html2canvas';
 
 interface SalaryChartsProps {
@@ -30,6 +32,10 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
     bar: boolean;
   }>({ pie: false, line: false, bar: false });
   const chartRef = useRef<HTMLDivElement>(null);
+  
+  // 触屏设备检测和触觉反馈
+  const { isTouchDevice, isMobile } = useTouchDevice();
+  const { triggerHapticFeedback } = useHapticFeedback();
   
   const { 
     getChartData, 
@@ -174,10 +180,34 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
    * 切换图表显示/隐藏状态
    */
   const toggleChartVisibility = (chartType: 'pie' | 'line' | 'bar') => {
+    // 触屏设备触觉反馈
+    if (isTouchDevice) {
+      triggerHapticFeedback('light');
+    }
     setVisibleCharts(prev => ({
       ...prev,
       [chartType]: !prev[chartType]
     }));
+  };
+  
+  /**
+   * 处理图表切换（带触觉反馈）
+   */
+  const handleChartChange = (chartType: 'pie' | 'line' | 'bar') => {
+    if (isTouchDevice) {
+      triggerHapticFeedback('medium');
+    }
+    setActiveChart(chartType);
+  };
+  
+  /**
+   * 处理图表放大（带触觉反馈）
+   */
+  const handleChartEnlarge = (chartType: 'pie' | 'line' | 'bar') => {
+    if (isTouchDevice) {
+      triggerHapticFeedback('heavy');
+    }
+    setEnlargedChart(chartType);
   };
 
   /**
@@ -193,10 +223,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
     const sin = Math.sin(-RADIAN * midAngle);
     const cos = Math.cos(-RADIAN * midAngle);
     
-    // 响应式调整
+    // 响应式调整 - 针对触屏设备优化
     const isSmallScreen = window.innerWidth < 640;
-    const containerWidth = isSmallScreen ? 320 : 450;
-    const containerHeight = isSmallScreen ? 280 : 350;
+    const containerWidth = isTouchDevice 
+      ? (isMobile ? 300 : 400) 
+      : (isSmallScreen ? 320 : 450);
+    const containerHeight = isTouchDevice 
+      ? (isMobile ? 260 : 320) 
+      : (isSmallScreen ? 280 : 350);
     
     // 计算连接线的起点（从饼图边缘开始）
     const sx = cx + outerRadius * cos;
@@ -205,10 +239,16 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
     // 确定标签在左侧还是右侧
     const isRightSide = cos >= 0;
     
-    // 标签尺寸
-    const labelHeight = isSmallScreen ? 32 : 36;
-    const labelWidth = isSmallScreen ? 85 : 105;
-    const minSpacing = isSmallScreen ? 6 : 8;
+    // 标签尺寸 - 触屏设备优化
+    const labelHeight = isTouchDevice 
+      ? (isMobile ? 36 : 40) 
+      : (isSmallScreen ? 32 : 36);
+    const labelWidth = isTouchDevice 
+      ? (isMobile ? 95 : 115) 
+      : (isSmallScreen ? 85 : 105);
+    const minSpacing = isTouchDevice 
+      ? (isMobile ? 10 : 12) 
+      : (isSmallScreen ? 6 : 8);
     
     // 计算理想的标签位置（最接近饼块的自然位置）
     const idealDistance = isSmallScreen ? 60 : 80;
@@ -280,11 +320,19 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
     const textAnchor = isRightSide ? 'start' : 'end';
     const percentText = `${(percent * 100).toFixed(1)}%`;
     
-    // 响应式字体和尺寸
-    const fontSize = isSmallScreen ? 11 : 13;
-    const percentFontSize = isSmallScreen ? 10 : 12;
-    const bgWidth = isSmallScreen ? 85 : 105;
-    const bgHeight = isSmallScreen ? 28 : 32;
+    // 响应式字体和尺寸 - 触屏设备优化
+    const fontSize = isTouchDevice 
+      ? (isMobile ? 13 : 15) 
+      : (isSmallScreen ? 11 : 13);
+    const percentFontSize = isTouchDevice 
+      ? (isMobile ? 12 : 14) 
+      : (isSmallScreen ? 10 : 12);
+    const bgWidth = isTouchDevice 
+      ? (isMobile ? 95 : 115) 
+      : (isSmallScreen ? 85 : 105);
+    const bgHeight = isTouchDevice 
+      ? (isMobile ? 36 : 40) 
+      : (isSmallScreen ? 28 : 32);
     
     return (
       <g 
@@ -408,60 +456,101 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", isTouchDevice && "space-y-6")}>
       {/* 图表显示控制 */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+      <div className={cn("mb-4", isTouchDevice ? "mb-8" : "sm:mb-6")}>
+        <div className={cn(
+          "flex flex-wrap gap-2 justify-center sm:justify-start",
+          isTouchDevice && "gap-4 justify-center"
+        )}>
           <ClayButton
             variant={visibleCharts.pie ? 'primary' : 'secondary'}
-            size="sm"
+            size={isTouchDevice ? "md" : "sm"}
             onClick={() => toggleChartVisibility('pie')}
-            className={`flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm ${!visibleCharts.pie ? 'opacity-50' : ''}`}
+            className={cn(
+              "flex items-center justify-center gap-1 sm:gap-2",
+              isTouchDevice ? "text-base px-6 py-3" : "text-xs sm:text-sm",
+              !visibleCharts.pie && "opacity-50"
+            )}
+            hapticFeedback
           >
-            <PieChartIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">饼图 {!visibleCharts.pie && '(隐藏)'}</span>
-            <span className="sm:hidden">饼图</span>
+            <PieChartIcon className={cn(
+              isTouchDevice ? "w-5 h-5" : "w-3 h-3 sm:w-4 sm:h-4"
+            )} />
+            <span className={cn(
+              isTouchDevice ? "inline" : "hidden sm:inline"
+            )}>饼图 {!visibleCharts.pie && '(隐藏)'}</span>
+            {!isTouchDevice && <span className="sm:hidden">饼图</span>}
           </ClayButton>
           <ClayButton
             variant={visibleCharts.line ? 'primary' : 'secondary'}
-            size="sm"
+            size={isTouchDevice ? "md" : "sm"}
             onClick={() => toggleChartVisibility('line')}
-            className={`flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm ${!visibleCharts.line ? 'opacity-50' : ''}`}
+            className={cn(
+              "flex items-center justify-center gap-1 sm:gap-2",
+              isTouchDevice ? "text-base px-6 py-3" : "text-xs sm:text-sm",
+              !visibleCharts.line && "opacity-50"
+            )}
+            hapticFeedback
           >
-            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">折线图 {!visibleCharts.line && '(隐藏)'}</span>
-            <span className="sm:hidden">折线图</span>
+            <TrendingUp className={cn(
+              isTouchDevice ? "w-5 h-5" : "w-3 h-3 sm:w-4 sm:h-4"
+            )} />
+            <span className={cn(
+              isTouchDevice ? "inline" : "hidden sm:inline"
+            )}>折线图 {!visibleCharts.line && '(隐藏)'}</span>
+            {!isTouchDevice && <span className="sm:hidden">折线图</span>}
           </ClayButton>
           <ClayButton
             variant={visibleCharts.bar ? 'primary' : 'secondary'}
-            size="sm"
+            size={isTouchDevice ? "md" : "sm"}
             onClick={() => toggleChartVisibility('bar')}
-            className={`flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm ${!visibleCharts.bar ? 'opacity-50' : ''}`}
+            className={cn(
+              "flex items-center justify-center gap-1 sm:gap-2",
+              isTouchDevice ? "text-base px-6 py-3" : "text-xs sm:text-sm",
+              !visibleCharts.bar && "opacity-50"
+            )}
+            hapticFeedback
           >
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">柱状图 {!visibleCharts.bar && '(隐藏)'}</span>
-            <span className="sm:hidden">柱状图</span>
+            <BarChart3 className={cn(
+              isTouchDevice ? "w-5 h-5" : "w-3 h-3 sm:w-4 sm:h-4"
+            )} />
+            <span className={cn(
+              isTouchDevice ? "inline" : "hidden sm:inline"
+            )}>柱状图 {!visibleCharts.bar && '(隐藏)'}</span>
+            {!isTouchDevice && <span className="sm:hidden">柱状图</span>}
           </ClayButton>
         </div>
       </div>
 
       {/* 饼图 - 薪资组成 */}
         {visibleCharts.pie && (
-          <ClayCard variant="purple">
-            <ClayCardTitle className="flex flex-col gap-3">
+          <ClayCard variant="purple" padding={isTouchDevice ? "md" : "sm"}>
+            <ClayCardTitle className={cn("flex flex-col gap-3", isTouchDevice && "gap-4")}>
               <div className="flex items-center justify-between">
-                <span className="text-base sm:text-lg font-semibold">薪资组成分析</span>
+                <span className={cn(
+                  "font-semibold",
+                  isTouchDevice ? "text-xl" : "text-base sm:text-lg"
+                )}>薪资组成分析</span>
                 <ClayButton
                   variant="secondary"
-                  size="sm"
+                  size={isTouchDevice ? "md" : "sm"}
                   onClick={() => {
-                    setActiveChart('pie');
+                    handleChartChange('pie');
                     setShowExportDialog(true);
                   }}
-                  className="flex items-center justify-center gap-1 text-xs sm:text-sm px-2 sm:px-3"
+                  className={cn(
+                    "flex items-center justify-center gap-1",
+                    isTouchDevice ? "text-base px-4 py-2" : "text-xs sm:text-sm px-2 sm:px-3"
+                  )}
+                  hapticFeedback
                 >
-                  <Image className="w-3 h-3" />
-                  <span className="hidden sm:inline">导出</span>
+                  <Image className={cn(
+                    isTouchDevice ? "w-4 h-4" : "w-3 h-3"
+                  )} />
+                  <span className={cn(
+                    isTouchDevice ? "inline" : "hidden sm:inline"
+                  )}>导出</span>
                 </ClayButton>
               </div>
               <MonthSelector
@@ -469,27 +558,49 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                 onChange={setSelectedMonth}
                 availableMonths={availableMonths}
                 placeholder="全部月份"
-                className="text-xs sm:text-sm w-full sm:w-auto"
+                className={cn(
+                  "w-full sm:w-auto",
+                  isTouchDevice ? "text-base" : "text-xs sm:text-sm"
+                )}
               />
             </ClayCardTitle>
             <ClayCardContent>
               {pieData.length > 0 ? (
                 <div 
                   ref={activeChart === 'pie' ? chartRef : undefined}
-                  onDoubleClick={() => setEnlargedChart('pie')}
-                  className="cursor-pointer"
-                  title="双击放大查看"
+                  onDoubleClick={() => handleChartEnlarge('pie')}
+                  onTouchEnd={(e) => {
+                    // 触屏设备双击放大
+                    if (isTouchDevice && e.detail === 2) {
+                      handleChartEnlarge('pie');
+                    }
+                  }}
+                  className={cn(
+                    "cursor-pointer",
+                    isTouchDevice && "touch-manipulation select-none"
+                  )}
+                  title={isTouchDevice ? "双击放大查看" : "双击放大查看"}
                 >
-                  <div className="h-64 sm:h-80 lg:h-96 px-2 sm:px-4 lg:px-8 py-2 sm:py-4">
+                  <div className={cn(
+                    "px-2 sm:px-4 lg:px-8 py-2 sm:py-4",
+                    isTouchDevice 
+                      ? "h-80 lg:h-96" 
+                      : "h-64 sm:h-80 lg:h-96"
+                  )}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+                      <PieChart margin={{ 
+                        top: isTouchDevice ? 15 : 10, 
+                        right: isTouchDevice ? 30 : 20, 
+                        bottom: isTouchDevice ? 15 : 10, 
+                        left: isTouchDevice ? 30 : 20 
+                      }}>
                         <Pie
                           data={pieData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
                           label={(props) => renderCustomizedLabel(props, pieData)}
-                          outerRadius={80}
+                          outerRadius={isTouchDevice ? (isMobile ? 70 : 90) : 80}
                           fill="#8884d8"
                           dataKey="value"
                           className="drop-shadow-lg"
@@ -504,7 +615,10 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-500">
+                <div className={cn(
+                  "text-center py-8 text-slate-500",
+                  isTouchDevice && "py-12 text-lg"
+                )}>
                   暂无数据可显示图表
                 </div>
               )}

@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayInput } from './ui/ClayInput';
 import { ClayButton } from './ui/ClayButton';
+import { TouchHelpButton } from './TouchHelpOverlay';
 import { useSalaryStore } from '../store/salaryStore';
-import { Settings, Save, Download, Trash2, Upload } from 'lucide-react';
+import { Settings, Save, Download, Trash2, Upload, Smartphone, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OvertimeRate } from '../types/salary';
-import { useRef } from 'react';
+import { usePWA } from '../hooks/usePWA';
+import { useTouchDevice } from '../hooks/useTouchDevice';
+import { cn } from '../lib/utils';
+
+interface SalarySettingsProps {}
 
 /**
  * 设置页面组件
  */
-export const SalarySettings: React.FC = () => {
+export const SalarySettings: React.FC<SalarySettingsProps> = () => {
   const { overtimeRates, records, updateOvertimeRates, clearAllRecords, exportRecords, importRecords } = useSalaryStore();
+  const { isInstalled, isOnline, updateAvailable, updateSW } = usePWA();
+  const { isTouchDevice, isMobile } = useTouchDevice();
   
   const [tempRates, setTempRates] = useState<OvertimeRate>(overtimeRates);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,10 +157,24 @@ export const SalarySettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-2 px-1">
-      <div className="space-y-2">
+    <div className={cn("space-y-2 px-1", isMobile && "space-y-4")}>
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <h1 className={cn(
+            "font-bold text-slate-800",
+            isTouchDevice ? "text-3xl" : "text-2xl"
+          )}>设置</h1>
+          {/* 触屏帮助按钮 */}
+          <TouchHelpButton />
+        </div>
+        <p className={cn(
+          "text-slate-600",
+          isTouchDevice ? "text-lg" : "text-base"
+        )}>管理费率设置和数据</p>
+      </div>
+      <div className={cn("space-y-2", isTouchDevice && "space-y-4")}>
         {/* 加班费率设置 */}
-        <ClayCard variant="pink" padding="sm">
+        <ClayCard variant="pink" padding={isTouchDevice ? "md" : "sm"}>
           <ClayCardTitle>加班费率设置</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-2">
@@ -220,8 +241,10 @@ export const SalarySettings: React.FC = () => {
           </ClayCardContent>
         </ClayCard>
 
+
+
         {/* 数据管理 */}
-        <ClayCard variant="orange" padding="sm">
+        <ClayCard variant="orange" padding={isTouchDevice ? "md" : "sm"}>
           <ClayCardTitle>数据管理</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-3">
@@ -300,6 +323,76 @@ export const SalarySettings: React.FC = () => {
                 <p>• 导出的CSV文件包含所有历史记录的详细信息</p>
                 <p>• 清空数据操作不可撤销，请谨慎操作</p>
                 <p>• 费率设置会影响后续的薪资计算</p>
+              </div>
+            </div>
+          </ClayCardContent>
+        </ClayCard>
+
+        {/* PWA状态显示 */}
+        <ClayCard variant="gray" padding={isTouchDevice ? "md" : "sm"}>
+          <ClayCardContent>
+            <div className={cn("space-y-2", isTouchDevice && "space-y-3")}>
+              <h4 className={cn(
+                "font-medium text-slate-700 mb-2",
+                isTouchDevice ? "text-base" : "text-sm"
+              )}>应用状态</h4>
+              
+              <div className="space-y-2">
+                {/* 安装状态 */}
+                <div className={cn(
+                  "flex items-center justify-between",
+                  isTouchDevice ? "text-base" : "text-sm"
+                )}>
+                  <span className="text-slate-600">PWA安装状态:</span>
+                  <div className="flex items-center gap-1">
+                    {isInstalled ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-green-600 font-medium">已安装</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 text-orange-500" />
+                        <span className="text-orange-600 font-medium">未安装</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* 网络状态 */}
+                <div className={cn(
+                  "flex items-center justify-between",
+                  isTouchDevice ? "text-base" : "text-sm"
+                )}>
+                  <span className="text-slate-600">网络状态:</span>
+                  <div className="flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${
+                      isOnline ? 'bg-green-500' : 'bg-orange-500'
+                    }`} />
+                    <span className={`font-medium ${
+                      isOnline ? 'text-green-600' : 'text-orange-600'
+                    }`}>
+                      {isOnline ? '在线' : '离线'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 更新状态 */}
+                {updateAvailable && (
+                  <div className={cn(
+                    "flex items-center justify-between",
+                    isTouchDevice ? "text-base" : "text-sm"
+                  )}>
+                    <span className="text-slate-600">应用更新:</span>
+                    <ClayButton
+                      variant="primary"
+                      onClick={updateSW}
+                      className="text-xs px-2 py-1"
+                    >
+                      立即更新
+                    </ClayButton>
+                  </div>
+                )}
               </div>
             </div>
           </ClayCardContent>
