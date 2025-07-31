@@ -392,7 +392,7 @@ export const SalarySettings: React.FC = React.memo(() => {
         </ClayCard>
 
         {/* PWA状态显示 */}
-        <ClayCard variant="blue" padding={isTouchDevice ? "md" : "sm"}>
+        <ClayCard variant="purple" padding={isTouchDevice ? "md" : "sm"}>
           <ClayCardTitle>PWA状态</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-3">
