@@ -2,12 +2,12 @@
   "name": "薪资计算器",
   "short_name": "薪资计算",
   "description": "智能薪资计算工具，支持加班费计算、历史记录管理和数据可视化",
-  "start_url": "/",
+  "start_url": "/salary-calculator/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#8b5cf6",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/salary-calculator/",
   "lang": "zh-CN",
   "dir": "ltr",
   "categories": ["productivity", "finance", "utilities"],
@@ -50,7 +50,7 @@
       "name": "薪资计算",
       "short_name": "计算",
       "description": "快速计算薪资",
-      "url": "/?page=calculator",
+      "url": "/salary-calculator/?page=calculator",
       "icons": [
         {
           "src": "/pwa-192x192.png",
@@ -63,7 +63,7 @@
       "name": "历史记录",
       "short_name": "历史",
       "description": "查看薪资历史记录",
-      "url": "/?page=history",
+      "url": "/salary-calculator/?page=history",
       "icons": [
         {
           "src": "/pwa-192x192.png",

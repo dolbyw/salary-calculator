@@ -27,8 +27,8 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: '/salary-calculator/',
+        start_url: '/salary-calculator/',
         icons: [
           {
             src: 'pwa-192x192.png',
