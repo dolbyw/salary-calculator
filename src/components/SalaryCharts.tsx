@@ -35,7 +35,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   
   // 触屏设备检测和触觉反馈
   const { isTouchDevice, isMobile } = useTouchDevice();
-  const { triggerHapticFeedback } = useHapticFeedback();
+  const { triggerHaptic } = useHapticFeedback();
   
   const { 
     getChartData, 
@@ -182,7 +182,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   const toggleChartVisibility = (chartType: 'pie' | 'line' | 'bar') => {
     // 触屏设备触觉反馈
     if (isTouchDevice) {
-      triggerHapticFeedback('light');
+      triggerHaptic('light');
     }
     setVisibleCharts(prev => ({
       ...prev,
@@ -195,7 +195,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
    */
   const handleChartChange = (chartType: 'pie' | 'line' | 'bar') => {
     if (isTouchDevice) {
-      triggerHapticFeedback('medium');
+      triggerHaptic('medium');
     }
     setActiveChart(chartType);
   };
@@ -205,7 +205,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
    */
   const handleChartEnlarge = (chartType: 'pie' | 'line' | 'bar') => {
     if (isTouchDevice) {
-      triggerHapticFeedback('heavy');
+      triggerHaptic('heavy');
     }
     setEnlargedChart(chartType);
   };

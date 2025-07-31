@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const { isDark, colors } = useTheme();
   
   // 页面顺序，用于滑动导航
-  const pageOrder = ['calculator', 'history', 'settings'] as const;
+  const pageOrder: string[] = ['calculator', 'history', 'settings'];
 
   // 初始化时计算一次薪资
   useEffect(() => {
