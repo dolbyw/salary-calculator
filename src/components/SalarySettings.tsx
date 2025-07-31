@@ -10,6 +10,7 @@ import { OvertimeRate } from '../types/salary';
 
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import { useTheme } from '../hooks/useTheme';
+import { usePWA } from '../hooks/usePWA';
 import { cn } from '../lib/utils';
 
 /**
@@ -19,6 +20,7 @@ export const SalarySettings: React.FC = React.memo(() => {
   const { overtimeRates, records, updateOvertimeRates, clearAllRecords, exportRecords, importRecords } = useSalaryStore();
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { themeMode, setTheme, isDark, colors } = useTheme();
+  const { isInstalled, isOnline, isInstallable, updateAvailable } = usePWA();
   
   const [tempRates, setTempRates] = useState<OvertimeRate>(overtimeRates);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -389,8 +391,91 @@ export const SalarySettings: React.FC = React.memo(() => {
           </ClayCardContent>
         </ClayCard>
 
-
-
+        {/* PWA状态显示 */}
+        <ClayCard variant="blue" padding={isTouchDevice ? "md" : "sm"}>
+          <ClayCardTitle>PWA状态</ClayCardTitle>
+          <ClayCardContent>
+            <div className="space-y-3">
+              <div className={cn(
+                "text-sm mb-3 transition-colors duration-300",
+                isDark ? "text-slate-300" : "text-slate-600"
+              )}>
+                Progressive Web App (PWA) 状态信息
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className={cn(
+                    "text-sm transition-colors duration-300",
+                    colors.text.secondary
+                  )}>安装状态:</span>
+                  <span className={cn(
+                    "text-sm font-medium px-2 py-1 rounded-full transition-colors duration-300",
+                    isInstalled 
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                  )}>
+                    {isInstalled ? '已安装' : '未安装'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className={cn(
+                    "text-sm transition-colors duration-300",
+                    colors.text.secondary
+                  )}>网络状态:</span>
+                  <span className={cn(
+                    "text-sm font-medium px-2 py-1 rounded-full transition-colors duration-300",
+                    isOnline 
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  )}>
+                    {isOnline ? '在线' : '离线'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className={cn(
+                    "text-sm transition-colors duration-300",
+                    colors.text.secondary
+                  )}>可安装:</span>
+                  <span className={cn(
+                    "text-sm font-medium px-2 py-1 rounded-full transition-colors duration-300",
+                    isInstallable 
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" 
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                  )}>
+                    {isInstallable ? '是' : '否'}
+                  </span>
+                </div>
+                
+                {updateAvailable && (
+                  <div className="flex justify-between items-center">
+                    <span className={cn(
+                      "text-sm transition-colors duration-300",
+                      colors.text.secondary
+                    )}>更新状态:</span>
+                    <span className="text-sm font-medium px-2 py-1 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                      有更新可用
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className={cn(
+                "text-xs space-y-1 transition-colors duration-300",
+                isDark ? "text-slate-300" : "text-slate-500"
+              )}>
+                <p>• PWA可以像原生应用一样安装到设备上</p>
+                <p>• 安装后可以离线使用基本功能</p>
+                <p>• 支持桌面快捷方式和应用图标</p>
+                {!isInstalled && isInstallable && (
+                  <p className="text-blue-600 dark:text-blue-400">• 当前可以安装PWA，请查看浏览器地址栏的安装按钮</p>
+                )}
+              </div>
+            </div>
+          </ClayCardContent>
+        </ClayCard>
 
       </div>
 
