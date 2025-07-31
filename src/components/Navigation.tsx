@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Calculator, History, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTouchDevice } from '../hooks/useTouchDevice';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * 导航组件属性接口
@@ -25,8 +26,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
   const lastTapRef = useRef<number>(0);
   const debounceRef = useRef<NodeJS.Timeout>();
   
-  // 使用统一的触屏设备检测Hook
+  // 使用统一的触屏设备检测Hook和主题Hook
   const { isTouchDevice, isMobile } = useTouchDevice();
+  const { isDark } = useTheme();
 
   /**
    * 防抖函数 - 避免频繁的状态切换
@@ -251,19 +253,27 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
     const colorStyles = {
       purple: {
         active: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-[4px_4px_12px_rgba(139,92,246,0.4),-4px_-4px_12px_rgba(167,139,250,0.4)]',
-        inactive: 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200 hover:shadow-[2px_2px_8px_rgba(139,92,246,0.2),-2px_-2px_8px_rgba(167,139,250,0.2)]',
+        inactive: isDark 
+          ? 'bg-gradient-to-br from-purple-800 to-purple-900 text-purple-200 hover:from-purple-700 hover:to-purple-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(88,28,135,0.2)]' 
+          : 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200 hover:shadow-[2px_2px_8px_rgba(139,92,246,0.2),-2px_-2px_8px_rgba(167,139,250,0.2)]',
       },
       green: {
         active: 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-[4px_4px_12px_rgba(52,211,153,0.4),-4px_-4px_12px_rgba(110,231,183,0.4)]',
-        inactive: 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 hover:from-emerald-100 hover:to-emerald-200 hover:shadow-[2px_2px_8px_rgba(52,211,153,0.2),-2px_-2px_8px_rgba(110,231,183,0.2)]',
+        inactive: isDark 
+          ? 'bg-gradient-to-br from-emerald-800 to-emerald-900 text-emerald-200 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(6,78,59,0.2)]' 
+          : 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 hover:from-emerald-100 hover:to-emerald-200 hover:shadow-[2px_2px_8px_rgba(52,211,153,0.2),-2px_-2px_8px_rgba(110,231,183,0.2)]',
       },
       pink: {
         active: 'bg-gradient-to-br from-pink-400 to-pink-600 text-white shadow-[4px_4px_12px_rgba(244,114,182,0.4),-4px_-4px_12px_rgba(251,182,206,0.4)]',
-        inactive: 'bg-gradient-to-br from-pink-50 to-pink-100 text-pink-700 hover:from-pink-100 hover:to-pink-200 hover:shadow-[2px_2px_8px_rgba(244,114,182,0.2),-2px_-2px_8px_rgba(251,182,206,0.2)]',
+        inactive: isDark 
+          ? 'bg-gradient-to-br from-pink-800 to-pink-900 text-pink-200 hover:from-pink-700 hover:to-pink-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(131,24,67,0.2)]' 
+          : 'bg-gradient-to-br from-pink-50 to-pink-100 text-pink-700 hover:from-pink-100 hover:to-pink-200 hover:shadow-[2px_2px_8px_rgba(244,114,182,0.2),-2px_-2px_8px_rgba(251,182,206,0.2)]',
       },
       gray: {
         active: 'bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[4px_4px_12px_rgba(107,114,128,0.4),-4px_-4px_12px_rgba(156,163,175,0.4)]',
-        inactive: 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:from-gray-100 hover:to-gray-200 hover:shadow-[2px_2px_8px_rgba(107,114,128,0.2),-2px_-2px_8px_rgba(156,163,175,0.2)]',
+        inactive: isDark 
+          ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-gray-200 hover:from-gray-600 hover:to-gray-700 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(55,65,81,0.2)]' 
+          : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:from-gray-100 hover:to-gray-200 hover:shadow-[2px_2px_8px_rgba(107,114,128,0.2),-2px_-2px_8px_rgba(156,163,175,0.2)]',
       },
     };
 
@@ -291,7 +301,10 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
       onTouchEnd={handleTouchEndNav}
     >
       <div className={cn(
-        "bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-[6px_6px_20px_rgba(148,163,184,0.25),-6px_-6px_20px_rgba(255,255,255,0.9)] backdrop-blur-sm border border-white/20",
+        "rounded-xl backdrop-blur-sm transition-colors duration-300",
+        isDark 
+          ? "bg-gradient-to-br from-slate-800 to-slate-900 shadow-[6px_6px_20px_rgba(0,0,0,0.4),-6px_-6px_20px_rgba(71,85,105,0.3)] border border-slate-700/30" 
+          : "bg-gradient-to-br from-slate-50 to-slate-100 shadow-[6px_6px_20px_rgba(148,163,184,0.25),-6px_-6px_20px_rgba(255,255,255,0.9)] border border-white/20",
         // 触屏设备优化间距
         isTouchDevice ? "p-2" : "p-1.5"
       )}>

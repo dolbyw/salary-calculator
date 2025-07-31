@@ -4,11 +4,12 @@ import { ClayInput } from './ui/ClayInput';
 import { ClayButton } from './ui/ClayButton';
 
 import { useSalaryStore } from '../store/salaryStore';
-import { Settings, Save, Download, Trash2, Upload, Smartphone, CheckCircle, XCircle } from 'lucide-react';
+import { Settings, Save, Download, Trash2, Upload, Smartphone, CheckCircle, XCircle, Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import { OvertimeRate } from '../types/salary';
 import { usePWA } from '../hooks/usePWA';
 import { useTouchDevice } from '../hooks/useTouchDevice';
+import { useTheme } from '../hooks/useTheme';
 import { cn } from '../lib/utils';
 
 interface SalarySettingsProps {}
@@ -20,6 +21,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
   const { overtimeRates, records, updateOvertimeRates, clearAllRecords, exportRecords, importRecords } = useSalaryStore();
   const { isInstalled, isOnline, updateAvailable, updateSW } = usePWA();
   const { isTouchDevice, isMobile } = useTouchDevice();
+  const { themeMode, setTheme, isDark } = useTheme();
   
   const [tempRates, setTempRates] = useState<OvertimeRate>(overtimeRates);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -305,11 +307,77 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
               />
 
               {/* 说明文字 */}
-              <div className="text-xs text-slate-500 space-y-1">
+              <div className={cn(
+                "text-xs space-y-1 transition-colors duration-300",
+                isDark ? "text-slate-400" : "text-slate-500"
+              )}>
                 <p>• 支持导入CSV格式的薪资记录文件</p>
                 <p>• 导出的CSV文件包含所有历史记录的详细信息</p>
                 <p>• 清空数据操作不可撤销，请谨慎操作</p>
                 <p>• 费率设置会影响后续的薪资计算</p>
+              </div>
+            </div>
+          </ClayCardContent>
+        </ClayCard>
+
+        {/* 主题设置 */}
+        <ClayCard variant="purple" padding={isTouchDevice ? "md" : "sm"}>
+          <ClayCardTitle>主题设置</ClayCardTitle>
+          <ClayCardContent>
+            <div className="space-y-3">
+              <div className={cn(
+                "text-sm mb-3 transition-colors duration-300",
+                isDark ? "text-slate-300" : "text-slate-600"
+              )}>
+                选择您喜欢的主题模式，自动模式将根据系统设置切换
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <ClayButton
+                  variant={themeMode === 'light' ? 'primary' : 'secondary'}
+                  onClick={() => setTheme('light')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 h-auto",
+                    isTouchDevice && "p-4"
+                  )}
+                >
+                  <Sun className={cn("w-5 h-5", isTouchDevice && "w-6 h-6")} />
+                  <span className={cn("text-xs", isTouchDevice && "text-sm")}>白天</span>
+                </ClayButton>
+                
+                <ClayButton
+                  variant={themeMode === 'dark' ? 'primary' : 'secondary'}
+                  onClick={() => setTheme('dark')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 h-auto",
+                    isTouchDevice && "p-4"
+                  )}
+                >
+                  <Moon className={cn("w-5 h-5", isTouchDevice && "w-6 h-6")} />
+                  <span className={cn("text-xs", isTouchDevice && "text-sm")}>黑夜</span>
+                </ClayButton>
+                
+                <ClayButton
+                  variant={themeMode === 'auto' ? 'primary' : 'secondary'}
+                  onClick={() => setTheme('auto')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 h-auto",
+                    isTouchDevice && "p-4"
+                  )}
+                >
+                  <Monitor className={cn("w-5 h-5", isTouchDevice && "w-6 h-6")} />
+                  <span className={cn("text-xs", isTouchDevice && "text-sm")}>自动</span>
+                </ClayButton>
+              </div>
+              
+              <div className={cn(
+                "text-xs space-y-1 transition-colors duration-300",
+                isDark ? "text-slate-400" : "text-slate-500"
+              )}>
+                <p>• 白天模式：使用明亮的配色方案</p>
+                <p>• 黑夜模式：使用深色的配色方案，减少眼部疲劳</p>
+                <p>• 自动模式：根据系统设置自动切换主题</p>
+                <p>• 当前主题：{isDark ? '黑夜模式' : '白天模式'}</p>
               </div>
             </div>
           </ClayCardContent>
@@ -320,7 +388,8 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
           <ClayCardContent>
             <div className={cn("space-y-2", isTouchDevice && "space-y-3")}>
               <h4 className={cn(
-                "font-medium text-slate-700 mb-2",
+                "font-medium mb-2 transition-colors duration-300",
+                isDark ? "text-slate-200" : "text-slate-700",
                 isTouchDevice ? "text-base" : "text-sm"
               )}>应用状态</h4>
               
@@ -330,7 +399,10 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
                   "flex items-center justify-between",
                   isTouchDevice ? "text-base" : "text-sm"
                 )}>
-                  <span className="text-slate-600">PWA安装状态:</span>
+                  <span className={cn(
+                    "transition-colors duration-300",
+                    isDark ? "text-slate-300" : "text-slate-600"
+                  )}>PWA安装状态:</span>
                   <div className="flex items-center gap-1">
                     {isInstalled ? (
                       <>
@@ -351,7 +423,10 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
                   "flex items-center justify-between",
                   isTouchDevice ? "text-base" : "text-sm"
                 )}>
-                  <span className="text-slate-600">网络状态:</span>
+                  <span className={cn(
+                    "transition-colors duration-300",
+                    isDark ? "text-slate-300" : "text-slate-600"
+                  )}>网络状态:</span>
                   <div className="flex items-center gap-1">
                     <div className={`w-2 h-2 rounded-full ${
                       isOnline ? 'bg-green-500' : 'bg-orange-500'
@@ -370,7 +445,10 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
                     "flex items-center justify-between",
                     isTouchDevice ? "text-base" : "text-sm"
                   )}>
-                    <span className="text-slate-600">应用更新:</span>
+                    <span className={cn(
+                      "transition-colors duration-300",
+                      isDark ? "text-slate-300" : "text-slate-600"
+                    )}>应用更新:</span>
                     <ClayButton
                       variant="primary"
                       onClick={updateSW}

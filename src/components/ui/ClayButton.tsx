@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { useTouchDevice, useHapticFeedback } from '../../hooks/useTouchDevice';
+import { useTheme } from '../../hooks/useTheme';
 
 interface ClayButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger';
@@ -24,6 +25,7 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
 }) => {
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { triggerHaptic } = useHapticFeedback();
+  const { isDark } = useTheme();
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
@@ -38,27 +40,53 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
   const variantStyles = {
     primary: {
       base: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white',
-      shadow: 'shadow-[4px_4px_12px_rgba(139,92,246,0.3),-4px_-4px_12px_rgba(167,139,250,0.3)]',
-      hover: 'hover:from-purple-500 hover:to-purple-700 hover:shadow-[6px_6px_16px_rgba(139,92,246,0.4),-6px_-6px_16px_rgba(167,139,250,0.4)]',
-      active: 'active:shadow-[inset_2px_2px_8px_rgba(139,92,246,0.4),inset_-2px_-2px_8px_rgba(167,139,250,0.2)]',
+      shadow: isDark 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(88,28,135,0.4)]' 
+        : 'shadow-[4px_4px_12px_rgba(139,92,246,0.3),-4px_-4px_12px_rgba(167,139,250,0.3)]',
+      hover: isDark 
+        ? 'hover:from-purple-500 hover:to-purple-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(88,28,135,0.4)]' 
+        : 'hover:from-purple-500 hover:to-purple-700 hover:shadow-[6px_6px_16px_rgba(139,92,246,0.4),-6px_-6px_16px_rgba(167,139,250,0.4)]',
+      active: isDark 
+        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(88,28,135,0.3)]' 
+        : 'active:shadow-[inset_2px_2px_8px_rgba(139,92,246,0.4),inset_-2px_-2px_8px_rgba(167,139,250,0.2)]',
     },
     secondary: {
-      base: 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700',
-      shadow: 'shadow-[4px_4px_12px_rgba(148,163,184,0.3),-4px_-4px_12px_rgba(241,245,249,0.8)]',
-      hover: 'hover:from-slate-300 hover:to-slate-400 hover:shadow-[6px_6px_16px_rgba(148,163,184,0.4),-6px_-6px_16px_rgba(241,245,249,0.9)]',
-      active: 'active:shadow-[inset_2px_2px_8px_rgba(148,163,184,0.4),inset_-2px_-2px_8px_rgba(241,245,249,0.6)]',
+      base: isDark 
+        ? 'bg-gradient-to-br from-slate-600 to-slate-700 text-white' 
+        : 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700',
+      shadow: isDark 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(55,65,81,0.4)]' 
+        : 'shadow-[4px_4px_12px_rgba(148,163,184,0.3),-4px_-4px_12px_rgba(241,245,249,0.8)]',
+      hover: isDark 
+        ? 'hover:from-slate-500 hover:to-slate-600 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(71,85,105,0.4)]' 
+        : 'hover:from-slate-300 hover:to-slate-400 hover:shadow-[6px_6px_16px_rgba(148,163,184,0.4),-6px_-6px_16px_rgba(241,245,249,0.9)]',
+      active: isDark 
+        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(71,85,105,0.3)]' 
+        : 'active:shadow-[inset_2px_2px_8px_rgba(148,163,184,0.4),inset_-2px_-2px_8px_rgba(241,245,249,0.6)]',
     },
     success: {
       base: 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white',
-      shadow: 'shadow-[4px_4px_12px_rgba(52,211,153,0.3),-4px_-4px_12px_rgba(110,231,183,0.3)]',
-      hover: 'hover:from-emerald-500 hover:to-emerald-700 hover:shadow-[6px_6px_16px_rgba(52,211,153,0.4),-6px_-6px_16px_rgba(110,231,183,0.4)]',
-      active: 'active:shadow-[inset_2px_2px_8px_rgba(52,211,153,0.4),inset_-2px_-2px_8px_rgba(110,231,183,0.2)]',
+      shadow: isDark 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(6,78,59,0.3)]' 
+        : 'shadow-[4px_4px_12px_rgba(52,211,153,0.3),-4px_-4px_12px_rgba(110,231,183,0.3)]',
+      hover: isDark 
+        ? 'hover:from-emerald-500 hover:to-emerald-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(6,78,59,0.4)]' 
+        : 'hover:from-emerald-500 hover:to-emerald-700 hover:shadow-[6px_6px_16px_rgba(52,211,153,0.4),-6px_-6px_16px_rgba(110,231,183,0.4)]',
+      active: isDark 
+        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(6,78,59,0.3)]' 
+        : 'active:shadow-[inset_2px_2px_8px_rgba(52,211,153,0.4),inset_-2px_-2px_8px_rgba(110,231,183,0.2)]',
     },
     danger: {
       base: 'bg-gradient-to-br from-red-400 to-red-600 text-white',
-      shadow: 'shadow-[4px_4px_12px_rgba(248,113,113,0.3),-4px_-4px_12px_rgba(252,165,165,0.3)]',
-      hover: 'hover:from-red-500 hover:to-red-700 hover:shadow-[6px_6px_16px_rgba(248,113,113,0.4),-6px_-6px_16px_rgba(252,165,165,0.4)]',
-      active: 'active:shadow-[inset_2px_2px_8px_rgba(248,113,113,0.4),inset_-2px_-2px_8px_rgba(252,165,165,0.2)]',
+      shadow: isDark 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(127,29,29,0.3)]' 
+        : 'shadow-[4px_4px_12px_rgba(248,113,113,0.3),-4px_-4px_12px_rgba(252,165,165,0.3)]',
+      hover: isDark 
+        ? 'hover:from-red-500 hover:to-red-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(127,29,29,0.4)]' 
+        : 'hover:from-red-500 hover:to-red-700 hover:shadow-[6px_6px_16px_rgba(248,113,113,0.4),-6px_-6px_16px_rgba(252,165,165,0.4)]',
+      active: isDark 
+        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(127,29,29,0.3)]' 
+        : 'active:shadow-[inset_2px_2px_8px_rgba(248,113,113,0.4),inset_-2px_-2px_8px_rgba(252,165,165,0.2)]',
     },
   };
 
