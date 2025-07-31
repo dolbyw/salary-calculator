@@ -12,30 +12,19 @@ export const PWAInstallPrompt: React.FC = () => {
   const [isDismissed, setIsDismissed] = React.useState(false);
 
   React.useEffect(() => {
-    // 检查是否已经被用户关闭过
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
-      setIsDismissed(true);
-    }
-    
     // 开发环境下，添加调试信息
     if (import.meta.env.DEV) {
       console.log('PWA Install Prompt Debug:', {
         isInstallable,
-        isInstalled,
-        isDismissed,
-        dismissed: localStorage.getItem('pwa-install-dismissed')
+        isInstalled
       });
     }
-  }, [isInstallable, isInstalled, isDismissed]);
+  }, [isInstallable, isInstalled]);
 
   React.useEffect(() => {
     if (isInstallable && !isInstalled && !isDismissed) {
-      // 延迟显示，避免打扰用户
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 3000);
-      return () => clearTimeout(timer);
+      // 立即显示安装提示
+      setIsVisible(true);
     } else {
       setIsVisible(false);
     }
@@ -55,7 +44,6 @@ export const PWAInstallPrompt: React.FC = () => {
   const handleDismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
-    localStorage.setItem('pwa-install-dismissed', 'true');
   };
 
   if (!isVisible) {

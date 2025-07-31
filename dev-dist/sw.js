@@ -81,11 +81,11 @@ define(['./workbox-d9a5ed57'], (function (workbox) { 'use strict';
     "url": "registerSW.js",
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
-    "url": "/salary-calculator/",
-    "revision": "0.lr1n9hrcdfo"
+    "url": "/salary-calculator/index.html",
+    "revision": "0.hsl4ebntpro"
   }], {});
   workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/salary-calculator/"), {
+  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/salary-calculator/index.html"), {
     allowlist: [/^\/$/],
     denylist: [/^\/_/, /\/[^/?]+\.[^/]+$/, /^\/salary-calculator\/api\//]
   }));
