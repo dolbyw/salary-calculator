@@ -17,7 +17,7 @@ export default defineConfig({
  
     tsconfigPaths(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'manual',
       includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'icon.svg'],
       manifest: {
         name: '薪资计算器',
