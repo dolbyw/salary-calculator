@@ -7,7 +7,7 @@ import { useSalaryStore, calculateSalaryDetails } from '../store/salaryStore';
 import { useTouchDevice, useHapticFeedback } from '../hooks/useTouchDevice';
 import { PieChart as PieChartIcon, TrendingUp, BarChart3, Download, Image } from 'lucide-react';
 import { ChartData, MonthlySalaryStats } from '../types/salary';
-import { cn } from '../lib/utils';
+import { cn, formatAmount, formatDate } from '../lib/utils';
 import html2canvas from 'html2canvas';
 
 interface SalaryChartsProps {

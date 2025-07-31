@@ -92,12 +92,7 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
-/**
- * 格式化日期
- */
-const formatDate = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
+
 
 export const useSalaryStore = create<SalaryState>()(
   persist(
@@ -387,12 +382,10 @@ export const useSalaryStore = create<SalaryState>()(
                 continue;
               }
 
-              // 验证和转换数据
+              // 数据验证和转换工具函数
               const parseNumber = (value: string, fieldName: string): number => {
                 const num = parseFloat(value || '0');
-                if (isNaN(num) || num < 0) {
-                  throw new Error(`${fieldName}必须是非负数字`);
-                }
+                if (isNaN(num) || num < 0) throw new Error(`${fieldName}必须是非负数字`);
                 return num;
               };
 

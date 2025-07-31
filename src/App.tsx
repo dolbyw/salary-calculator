@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'sonner';
-import { Navigation } from './components/Navigation';
+import Navigation from './components/Navigation';
 import { SalaryCalculator } from './components/SalaryCalculator';
 import { SalaryHistory } from './components/SalaryHistory';
 import { SalarySettings } from './components/SalarySettings';
@@ -8,17 +8,18 @@ import { SwipeNavigation } from './components/TouchGestureHandler';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { useSalaryStore } from './store/salaryStore';
-import { useTouchDevice } from './hooks/useTouchDevice';
 import { useTheme } from './hooks/useTheme';
+import { useTouchDevice } from './hooks/useTouchDevice';
+import { cn } from './lib/utils';
 
 /**
  * 主应用组件
  */
-function App() {
+const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<'calculator' | 'history' | 'settings'>('calculator');
   const { calculateSalary } = useSalaryStore();
   const { isTouchDevice, isMobile } = useTouchDevice();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   
   // 页面顺序，用于滑动导航
   const pageOrder = ['calculator', 'history', 'settings'] as const;
@@ -29,9 +30,25 @@ function App() {
   }, [calculateSalary]);
 
   /**
-   * 渲染当前页面内容
+   * 获取当前页面的背景色 - 使用useMemo确保正确响应主题变化
    */
-  const renderCurrentPage = () => {
+  const getCurrentPageBackground = React.useMemo(() => {
+    switch (currentPage) {
+      case 'calculator':
+        return colors.background.calculator;
+      case 'history':
+        return colors.background.history;
+      case 'settings':
+        return colors.background.settings;
+      default:
+        return colors.background.calculator;
+    }
+  }, [currentPage, colors.background]);
+
+  /**
+   * 渲染当前页面内容 - 使用useMemo优化
+   */
+  const renderCurrentPage = useMemo(() => {
     switch (currentPage) {
       case 'calculator':
         return <SalaryCalculator />;
@@ -42,18 +59,17 @@ function App() {
       default:
         return <SalaryCalculator />;
     }
-  };
+  }, [currentPage]);
 
-  const handlePageChange = (page: 'calculator' | 'history' | 'settings') => {
+  const handlePageChange = useCallback((page: 'calculator' | 'history' | 'settings') => {
     setCurrentPage(page);
-  };
+  }, []);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDark 
-        ? 'bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800' 
-        : 'bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50'
-    }`}>
+    <div className={cn(
+      "min-h-screen transition-all duration-500 ease-out",
+      getCurrentPageBackground
+    )}>
       {/* PWA安装提示 */}
       <PWAInstallPrompt />
       
@@ -75,33 +91,34 @@ function App() {
           isTouchDevice ? 'touch-manipulation' : ''
         }`}>
           <main className={isMobile ? 'space-y-4' : 'space-y-6'}>
-            {renderCurrentPage()}
+            {renderCurrentPage}
           </main>
         </div>
         
         {/* 触屏设备页面指示器 */}
         {isTouchDevice && (
           <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-40">
-            <div className={`flex space-x-2 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg transition-colors duration-300 ${
-              isDark 
-                ? 'bg-gray-800/90 border border-gray-600' 
-                : 'bg-white/80'
-            }`}>
+            <div className={cn(
+              'flex space-x-2 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg transition-colors duration-300',
+              colors.indicator.background,
+              colors.indicator.border
+            )}>
               {pageOrder.map((page, index) => {
                 const isActive = currentPage === page;
                 return (
                   <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      isActive 
-                        ? 'bg-purple-500 scale-125' 
-                        : isDark 
-                          ? 'bg-gray-400 hover:bg-gray-300' 
-                          : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                    aria-label={`切换到${page === 'calculator' ? '计算器' : page === 'history' ? '历史记录' : '设置'}页面`}
-                  />
+                     key={page}
+                     onClick={() => handlePageChange(page)}
+                     className={cn(
+                       'w-2 h-2 rounded-full transition-all duration-300',
+                       isActive 
+                         ? colors.indicator.active + ' scale-125'
+                         : colors.indicator.inactive,
+                       'hover:scale-125',
+                       colors.indicator.hover
+                     )}
+                     aria-label={`切换到${page === 'calculator' ? '计算器' : page === 'history' ? '历史记录' : '设置'}页面`}
+                   />
                 );
               })}
             </div>
@@ -111,28 +128,22 @@ function App() {
 
       {/* Toast 通知 - 触屏设备优化 */}
       <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: isTouchDevice ? 4000 : 3000, // 触屏设备显示更长时间
-          style: {
-            background: isDark 
-              ? 'linear-gradient(135deg, #111827 0%, #1f2937 100%)' 
-              : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-            border: isDark ? '2px solid #374151' : '2px solid #e2e8f0',
-            borderRadius: isTouchDevice ? '20px' : '16px',
-            color: isDark ? '#ffffff' : '#334155',
-            fontSize: isTouchDevice ? '16px' : '14px',
-            fontWeight: '500',
-            boxShadow: isDark 
-              ? '4px 4px 12px rgba(0, 0, 0, 0.4), -4px -4px 12px rgba(55, 65, 81, 0.3)' 
-              : '4px 4px 12px rgba(148, 163, 184, 0.2), -4px -4px 12px rgba(255, 255, 255, 0.8)',
-            padding: isTouchDevice ? '16px 20px' : '12px 16px',
-            minHeight: isTouchDevice ? '48px' : 'auto',
-          },
-        }}
-      />
+          position={isTouchDevice ? 'bottom-center' : 'top-right'}
+          toastOptions={{
+            duration: isTouchDevice ? 4000 : 3000, // 触屏设备显示更长时间
+            className: cn(
+              colors.toast.background,
+              colors.toast.border,
+              colors.toast.text,
+              colors.toast.shadow,
+              'rounded-2xl font-medium',
+              isTouchDevice ? 'text-base p-4 min-h-12' : 'text-sm p-3'
+            ),
+          }}
+        />
     </div>
   );
 }
 
-export default App;
+// 使用React.memo优化组件性能
+export default React.memo(App);

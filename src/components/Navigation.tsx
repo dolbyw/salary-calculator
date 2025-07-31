@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Calculator, History, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTouchDevice } from '../hooks/useTouchDevice';
@@ -16,7 +16,7 @@ interface NavigationProps {
  * 悬浮导航组件 - 固定在左下角，支持智能吸附和自动滑出
  * 优化了触屏交互的稳定性和可用性
  */
-export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
+const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
@@ -28,7 +28,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
   
   // 使用统一的触屏设备检测Hook和主题Hook
   const { isTouchDevice, isMobile } = useTouchDevice();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
 
   /**
    * 防抖函数 - 避免频繁的状态切换
@@ -57,80 +57,75 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
   }, []);
 
   /**
-   * 触屏手势处理 - 优化了边缘检测和稳定性
+   * 统一的触屏手势处理
    */
-  const handleTouchStart = useCallback((e: TouchEvent) => {
+  const handleTouchGesture = useCallback((e: TouchEvent) => {
     if (!isTouchDevice) return;
     
-    const touch = e.touches[0];
-    setTouchStartX(touch.clientX);
-    setTouchStartY(touch.clientY);
-  }, [isTouchDevice]);
-
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    if (!isTouchDevice) return;
-    
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - touchStartX;
-    const deltaY = touch.clientY - touchStartY;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    
-    // 优化边缘滑动检测 - 增加灵敏度和容错性
-    const edgeThreshold = isMobile ? 60 : 50; // 移动设备增加边缘检测范围
-    const swipeThreshold = isMobile ? 40 : 50; // 移动设备降低滑动阈值
-    const verticalTolerance = isMobile ? 120 : 100; // 移动设备增加垂直容错
-    
-    if (touchStartX < edgeThreshold && deltaX > swipeThreshold && Math.abs(deltaY) < verticalTolerance) {
-      clearAllTimers();
-      setIsVisible(true);
+    if (e.type === 'touchstart') {
+      const touch = e.touches[0];
+      setTouchStartX(touch.clientX);
+      setTouchStartY(touch.clientY);
+    } else if (e.type === 'touchend') {
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       
-      // 根据设备类型调整显示时间
-      const displayDuration = isMobile ? 4000 : 3000;
-      timeoutRef.current = setTimeout(() => {
-        if (!isHovered) {
-          debounceSetVisible(false, 200);
-        }
-      }, displayDuration);
-    }
-    
-    // 优化双击边缘检测
-    const now = Date.now();
-    const tapThreshold = isMobile ? 120 : 100;
-    const tapTolerance = isMobile ? 30 : 20;
-    
-    if (touchStartX < tapThreshold && distance < tapTolerance) {
-      const timeSinceLastTap = now - lastTapRef.current;
-      if (timeSinceLastTap < 400 && timeSinceLastTap > 50) { // 防止误触
+      // 边缘滑动检测
+      const edgeThreshold = isMobile ? 60 : 50;
+      const swipeThreshold = isMobile ? 40 : 50;
+      const verticalTolerance = isMobile ? 120 : 100;
+      
+      if (touchStartX < edgeThreshold && deltaX > swipeThreshold && Math.abs(deltaY) < verticalTolerance) {
         clearAllTimers();
         setIsVisible(true);
-        // 双击后显示更长时间
+        
+        const displayDuration = isMobile ? 4000 : 3000;
         timeoutRef.current = setTimeout(() => {
           if (!isHovered) {
             debounceSetVisible(false, 200);
           }
-        }, 5000);
+        }, displayDuration);
       }
-      lastTapRef.current = now;
+      
+      // 双击边缘检测
+      const now = Date.now();
+      const tapThreshold = isMobile ? 120 : 100;
+      const tapTolerance = isMobile ? 30 : 20;
+      
+      if (touchStartX < tapThreshold && distance < tapTolerance) {
+        const timeSinceLastTap = now - lastTapRef.current;
+        if (timeSinceLastTap < 400 && timeSinceLastTap > 50) {
+          clearAllTimers();
+          setIsVisible(true);
+          timeoutRef.current = setTimeout(() => {
+            if (!isHovered) {
+              debounceSetVisible(false, 200);
+            }
+          }, 5000);
+        }
+        lastTapRef.current = now;
+      }
     }
   }, [touchStartX, touchStartY, isHovered, isTouchDevice, isMobile, clearAllTimers, debounceSetVisible]);
 
   /**
-   * 事件监听器管理 - 分离触屏和鼠标事件处理
+   * 事件监听器管理 - 统一的触屏事件处理
    */
   useEffect(() => {
     if (isTouchDevice) {
-      // 触屏设备事件监听
       const options = { passive: true, capture: false };
-      document.addEventListener('touchstart', handleTouchStart, options);
-      document.addEventListener('touchend', handleTouchEnd, options);
+      document.addEventListener('touchstart', handleTouchGesture, options);
+      document.addEventListener('touchend', handleTouchGesture, options);
       
       return () => {
-        document.removeEventListener('touchstart', handleTouchStart);
-        document.removeEventListener('touchend', handleTouchEnd);
+        document.removeEventListener('touchstart', handleTouchGesture);
+        document.removeEventListener('touchend', handleTouchGesture);
         clearAllTimers();
       };
     }
-  }, [isTouchDevice, handleTouchStart, handleTouchEnd, clearAllTimers]);
+  }, [isTouchDevice, handleTouchGesture, clearAllTimers]);
 
   /**
    * 鼠标事件处理（仅非触屏设备）
@@ -174,44 +169,39 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
   }, [isHovered, isTouchDevice, clearAllTimers, debounceSetVisible]);
 
   /**
-   * 鼠标交互处理（仅非触屏设备）
+   * 统一的鼠标交互处理
    */
-  const handleMouseEnter = useCallback(() => {
-    if (!isTouchDevice) {
+  const handleMouseInteraction = useCallback((type: 'enter' | 'leave') => {
+    if (isTouchDevice) return;
+    
+    if (type === 'enter') {
       setIsHovered(true);
       clearAllTimers();
       setIsVisible(true);
-    }
-  }, [isTouchDevice, clearAllTimers]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!isTouchDevice) {
+    } else {
       setIsHovered(false);
     }
-  }, [isTouchDevice]);
-
-  /**
-   * 导航栏直接触摸处理 - 优化了触屏交互
-   */
-  const handleTouchStartNav = useCallback((e: React.TouchEvent) => {
-    if (!isTouchDevice) return;
-    
-    e.stopPropagation();
-    setIsHovered(true);
-    clearAllTimers();
-    setIsVisible(true);
   }, [isTouchDevice, clearAllTimers]);
 
-  const handleTouchEndNav = useCallback(() => {
+  /**
+   * 导航栏直接触摸处理
+   */
+  const handleNavTouch = useCallback((e: React.TouchEvent, type: 'start' | 'end') => {
     if (!isTouchDevice) return;
     
-    setIsHovered(false);
-    // 根据设备类型调整隐藏延迟
-    const hideDelay = isMobile ? 3000 : 2500;
-    timeoutRef.current = setTimeout(() => {
-      debounceSetVisible(false, 200);
-    }, hideDelay);
-  }, [isTouchDevice, isMobile, debounceSetVisible]);
+    if (type === 'start') {
+      e.stopPropagation();
+      setIsHovered(true);
+      clearAllTimers();
+      setIsVisible(true);
+    } else {
+      setIsHovered(false);
+      const hideDelay = isMobile ? 3000 : 2500;
+      timeoutRef.current = setTimeout(() => {
+        debounceSetVisible(false, 200);
+      }, hideDelay);
+    }
+  }, [isTouchDevice, isMobile, clearAllTimers, debounceSetVisible]);
 
   /**
    * 组件卸载时清理资源
@@ -221,66 +211,45 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
       clearAllTimers();
     };
   }, [clearAllTimers]);
-  // 根据当前页面显示不同的导航项
-  const getNavItems = () => {
-    return [
-      {
-        id: 'calculator' as const,
-        label: '薪资计算',
-        icon: Calculator,
-        color: 'purple',
-      },
-      {
-        id: 'history' as const,
-        label: '历史记录',
-        icon: History,
-        color: 'green',
-      },
-      {
-        id: 'settings' as const,
-        label: '设置',
-        icon: Settings,
-        color: 'pink',
-      },
-    ];
-  };
-  
-  const navItems = getNavItems();
+  // 根据当前页面显示不同的导航项 - 使用useMemo优化
+  const navItems = useMemo(() => [
+    {
+      id: 'calculator' as const,
+      label: '薪资计算',
+      icon: Calculator,
+      color: 'purple',
+    },
+    {
+      id: 'history' as const,
+      label: '历史记录',
+      icon: History,
+      color: 'green',
+    },
+    {
+      id: 'settings' as const,
+      label: '设置',
+      icon: Settings,
+      color: 'pink',
+    },
+  ], []);
 
-  const getItemStyles = (itemId: string, color: string) => {
-    const isActive = currentPage === itemId;
-    
-    const colorStyles = {
-      purple: {
-        active: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-[4px_4px_12px_rgba(139,92,246,0.4),-4px_-4px_12px_rgba(167,139,250,0.4)]',
-        inactive: isDark 
-          ? 'bg-gradient-to-br from-purple-800 to-purple-900 text-purple-200 hover:from-purple-700 hover:to-purple-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(88,28,135,0.2)]' 
-          : 'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 hover:from-purple-100 hover:to-purple-200 hover:shadow-[2px_2px_8px_rgba(139,92,246,0.2),-2px_-2px_8px_rgba(167,139,250,0.2)]',
-      },
-      green: {
-        active: 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-[4px_4px_12px_rgba(52,211,153,0.4),-4px_-4px_12px_rgba(110,231,183,0.4)]',
-        inactive: isDark 
-          ? 'bg-gradient-to-br from-emerald-800 to-emerald-900 text-emerald-200 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(6,78,59,0.2)]' 
-          : 'bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 hover:from-emerald-100 hover:to-emerald-200 hover:shadow-[2px_2px_8px_rgba(52,211,153,0.2),-2px_-2px_8px_rgba(110,231,183,0.2)]',
-      },
-      pink: {
-        active: 'bg-gradient-to-br from-pink-400 to-pink-600 text-white shadow-[4px_4px_12px_rgba(244,114,182,0.4),-4px_-4px_12px_rgba(251,182,206,0.4)]',
-        inactive: isDark 
-          ? 'bg-gradient-to-br from-pink-800 to-pink-900 text-pink-200 hover:from-pink-700 hover:to-pink-800 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(131,24,67,0.2)]' 
-          : 'bg-gradient-to-br from-pink-50 to-pink-100 text-pink-700 hover:from-pink-100 hover:to-pink-200 hover:shadow-[2px_2px_8px_rgba(244,114,182,0.2),-2px_-2px_8px_rgba(251,182,206,0.2)]',
-      },
-      gray: {
-        active: 'bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-[4px_4px_12px_rgba(107,114,128,0.4),-4px_-4px_12px_rgba(156,163,175,0.4)]',
-        inactive: isDark 
-          ? 'bg-gradient-to-br from-gray-700 to-gray-800 text-gray-200 hover:from-gray-600 hover:to-gray-700 hover:shadow-[2px_2px_8px_rgba(0,0,0,0.3),-2px_-2px_8px_rgba(55,65,81,0.2)]' 
-          : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:from-gray-100 hover:to-gray-200 hover:shadow-[2px_2px_8px_rgba(107,114,128,0.2),-2px_-2px_8px_rgba(156,163,175,0.2)]',
-      },
+  /**
+   * 获取导航项样式 - 使用useMemo优化
+   */
+  /**
+   * 获取导航项样式 - 修复useMemo依赖数组，确保主题切换时立即更新
+   */
+  const getItemStyles = useMemo(() => {
+    return (itemId: string) => {
+      const isActive = currentPage === itemId;
+      
+      if (isActive) {
+        return `bg-gradient-to-br ${colors.navigation.activeItem} text-white`;
+      }
+      
+      return `${colors.navigation.inactiveItem} ${colors.navigation.hoverItem}`;
     };
-
-    return isActive 
-      ? colorStyles[color as keyof typeof colorStyles].active
-      : colorStyles[color as keyof typeof colorStyles].inactive;
-  };
+  }, [currentPage, colors.navigation.activeItem, colors.navigation.inactiveItem, colors.navigation.hoverItem]);
 
   return (
     <nav 
@@ -295,16 +264,16 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
           !isVisible && "-translate-x-20" // 触屏设备隐藏更多
         ]
       )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStartNav}
-      onTouchEnd={handleTouchEndNav}
+      onMouseEnter={() => handleMouseInteraction('enter')}
+      onMouseLeave={() => handleMouseInteraction('leave')}
+      onTouchStart={(e) => handleNavTouch(e, 'start')}
+      onTouchEnd={(e) => handleNavTouch(e, 'end')}
     >
       <div className={cn(
         "rounded-xl backdrop-blur-sm transition-colors duration-300",
-        isDark 
-          ? "bg-gradient-to-br from-slate-800 to-slate-900 shadow-[6px_6px_20px_rgba(0,0,0,0.4),-6px_-6px_20px_rgba(71,85,105,0.3)] border border-slate-700/30" 
-          : "bg-gradient-to-br from-slate-50 to-slate-100 shadow-[6px_6px_20px_rgba(148,163,184,0.25),-6px_-6px_20px_rgba(255,255,255,0.9)] border border-white/20",
+        colors.navigation.background,
+        colors.navigation.border,
+        colors.navigation.shadow,
         // 触屏设备优化间距
         isTouchDevice ? "p-2" : "p-1.5"
       )}>
@@ -344,7 +313,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
                   // 触屏设备的激活状态
                   isTouchDevice && isActive && 'scale-110',
                   // 颜色样式
-                  getItemStyles(item.id, item.color)
+                  getItemStyles(item.id)
                 )}
               >
                 <Icon className={cn(
@@ -360,3 +329,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
     </nav>
   );
 };
+
+// 使用React.memo优化组件性能
+export default React.memo(Navigation);
+export { Navigation };

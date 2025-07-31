@@ -12,3 +12,38 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* 移除默认的 focus 样式 */
+*:focus {
+  outline: none;
+}
+
+/* 为可访问性添加自定义 focus 样式 */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* 移除 input 和 button 的默认样式 */
+input, button, textarea, select {
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+}
+
+/* 移除 button 的默认样式 */
+button {
+  cursor: pointer;
+}
+
+/* 移除 input number 的默认样式 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

@@ -25,7 +25,7 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
 }) => {
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { triggerHaptic } = useHapticFeedback();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
@@ -37,58 +37,50 @@ export const ClayButton: React.FC<ClayButtonProps> = ({
     
     onClick?.(e);
   };
-  const variantStyles = {
+  
+  // 使用统一的主题配色方案 - 修复useMemo依赖数组，确保主题切换时立即更新
+  const variantStyles = React.useMemo(() => ({
     primary: {
-      base: 'bg-gradient-to-br from-purple-400 to-purple-600 text-white',
+      base: `bg-gradient-to-br ${colors.button.primary}`,
       shadow: isDark 
-        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(88,28,135,0.4)]' 
-        : 'shadow-[4px_4px_12px_rgba(139,92,246,0.3),-4px_-4px_12px_rgba(167,139,250,0.3)]',
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.6),-4px_-4px_12px_rgba(16,185,129,0.1)]' 
+        : 'shadow-[4px_4px_12px_rgba(59,130,246,0.3),-4px_-4px_12px_rgba(147,197,253,0.3)]',
       hover: isDark 
-        ? 'hover:from-purple-500 hover:to-purple-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(88,28,135,0.4)]' 
-        : 'hover:from-purple-500 hover:to-purple-700 hover:shadow-[6px_6px_16px_rgba(139,92,246,0.4),-6px_-6px_16px_rgba(167,139,250,0.4)]',
-      active: isDark 
-        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(88,28,135,0.3)]' 
-        : 'active:shadow-[inset_2px_2px_8px_rgba(139,92,246,0.4),inset_-2px_-2px_8px_rgba(167,139,250,0.2)]',
+        ? 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.7),-6px_-6px_16px_rgba(16,185,129,0.15)]' 
+        : 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(59,130,246,0.4),-6px_-6px_16px_rgba(147,197,253,0.4)]',
+      active: 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.3)]',
     },
     secondary: {
-      base: isDark 
-        ? 'bg-gradient-to-br from-slate-600 to-slate-700 text-white' 
-        : 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700',
+      base: `bg-gradient-to-br ${colors.button.secondary}`,
       shadow: isDark 
-        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.5),-4px_-4px_12px_rgba(55,65,81,0.4)]' 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.6),-4px_-4px_12px_rgba(71,85,105,0.1)]' 
         : 'shadow-[4px_4px_12px_rgba(148,163,184,0.3),-4px_-4px_12px_rgba(241,245,249,0.8)]',
       hover: isDark 
-        ? 'hover:from-slate-500 hover:to-slate-600 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(71,85,105,0.4)]' 
-        : 'hover:from-slate-300 hover:to-slate-400 hover:shadow-[6px_6px_16px_rgba(148,163,184,0.4),-6px_-6px_16px_rgba(241,245,249,0.9)]',
-      active: isDark 
-        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(71,85,105,0.3)]' 
-        : 'active:shadow-[inset_2px_2px_8px_rgba(148,163,184,0.4),inset_-2px_-2px_8px_rgba(241,245,249,0.6)]',
+        ? 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.7),-6px_-6px_16px_rgba(71,85,105,0.15)]' 
+        : 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(148,163,184,0.4),-6px_-6px_16px_rgba(241,245,249,0.9)]',
+      active: 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.3)]',
     },
     success: {
-      base: 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white',
+      base: `bg-gradient-to-br ${colors.button.success}`,
       shadow: isDark 
-        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(6,78,59,0.3)]' 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.6),-4px_-4px_12px_rgba(71,85,105,0.1)]' 
         : 'shadow-[4px_4px_12px_rgba(52,211,153,0.3),-4px_-4px_12px_rgba(110,231,183,0.3)]',
       hover: isDark 
-        ? 'hover:from-emerald-500 hover:to-emerald-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(6,78,59,0.4)]' 
-        : 'hover:from-emerald-500 hover:to-emerald-700 hover:shadow-[6px_6px_16px_rgba(52,211,153,0.4),-6px_-6px_16px_rgba(110,231,183,0.4)]',
-      active: isDark 
-        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(6,78,59,0.3)]' 
-        : 'active:shadow-[inset_2px_2px_8px_rgba(52,211,153,0.4),inset_-2px_-2px_8px_rgba(110,231,183,0.2)]',
+        ? 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.7),-6px_-6px_16px_rgba(71,85,105,0.15)]' 
+        : 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(52,211,153,0.4),-6px_-6px_16px_rgba(110,231,183,0.4)]',
+      active: 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.3)]',
     },
     danger: {
-      base: 'bg-gradient-to-br from-red-400 to-red-600 text-white',
+      base: `bg-gradient-to-br ${colors.button.danger}`,
       shadow: isDark 
-        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.4),-4px_-4px_12px_rgba(127,29,29,0.3)]' 
+        ? 'shadow-[4px_4px_12px_rgba(0,0,0,0.6),-4px_-4px_12px_rgba(71,85,105,0.1)]' 
         : 'shadow-[4px_4px_12px_rgba(248,113,113,0.3),-4px_-4px_12px_rgba(252,165,165,0.3)]',
       hover: isDark 
-        ? 'hover:from-red-500 hover:to-red-700 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.5),-6px_-6px_16px_rgba(127,29,29,0.4)]' 
-        : 'hover:from-red-500 hover:to-red-700 hover:shadow-[6px_6px_16px_rgba(248,113,113,0.4),-6px_-6px_16px_rgba(252,165,165,0.4)]',
-      active: isDark 
-        ? 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.5),inset_-2px_-2px_8px_rgba(127,29,29,0.3)]' 
-        : 'active:shadow-[inset_2px_2px_8px_rgba(248,113,113,0.4),inset_-2px_-2px_8px_rgba(252,165,165,0.2)]',
+        ? 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(0,0,0,0.7),-6px_-6px_16px_rgba(71,85,105,0.15)]' 
+        : 'hover:brightness-110 hover:shadow-[6px_6px_16px_rgba(248,113,113,0.4),-6px_-6px_16px_rgba(252,165,165,0.4)]',
+      active: 'active:shadow-[inset_2px_2px_8px_rgba(0,0,0,0.3)]',
     },
-  };
+  }), [colors.button.primary, colors.button.secondary, colors.button.success, colors.button.danger, isDark]);
 
   const sizeStyles = {
     sm: isTouchDevice 

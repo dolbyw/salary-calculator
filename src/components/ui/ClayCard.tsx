@@ -27,7 +27,7 @@ export const ClayCard: React.FC<ClayCardProps> = ({
 }) => {
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { triggerHaptic } = useHapticFeedback();
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
 
   const handleClick = () => {
     if (!onClick) return;
@@ -41,64 +41,47 @@ export const ClayCard: React.FC<ClayCardProps> = ({
   };
 
   const isClickable = !!onClick || hover;
-  const variantStyles = {
+  // 使用统一的主题配色方案
+  const variantStyles = React.useMemo(() => ({
     default: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-gray-800 to-gray-900' 
-        : 'bg-gradient-to-br from-slate-50 to-slate-100',
-      border: isDark ? 'border-gray-600' : 'border-slate-200',
+      bg: `bg-gradient-to-br ${colors.card.default}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(55,65,81,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(148,163,184,0.2),-8px_-8px_20px_rgba(255,255,255,0.8)]',
     },
     purple: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-purple-800 to-purple-900' 
-        : 'bg-gradient-to-br from-purple-50 to-purple-100',
-      border: isDark ? 'border-purple-600' : 'border-purple-200',
+      bg: `bg-gradient-to-br ${colors.card.purple}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(88,28,135,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(139,92,246,0.15),-8px_-8px_20px_rgba(255,255,255,0.9)]',
     },
     green: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-emerald-800 to-emerald-900' 
-        : 'bg-gradient-to-br from-emerald-50 to-emerald-100',
-      border: isDark ? 'border-emerald-600' : 'border-emerald-200',
+      bg: `bg-gradient-to-br ${colors.card.green}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(6,78,59,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(52,211,153,0.15),-8px_-8px_20px_rgba(255,255,255,0.9)]',
     },
     pink: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-pink-800 to-pink-900' 
-        : 'bg-gradient-to-br from-pink-50 to-pink-100',
-      border: isDark ? 'border-pink-600' : 'border-pink-200',
+      bg: `bg-gradient-to-br ${colors.card.pink}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(131,24,67,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(244,114,182,0.15),-8px_-8px_20px_rgba(255,255,255,0.9)]',
     },
     orange: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-orange-800 to-orange-900' 
-        : 'bg-gradient-to-br from-orange-50 to-orange-100',
-      border: isDark ? 'border-orange-600' : 'border-orange-200',
+      bg: `bg-gradient-to-br ${colors.card.orange}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(154,52,18,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(251,113,133,0.15),-8px_-8px_20px_rgba(255,255,255,0.9)]',
     },
     gray: {
-      bg: isDark 
-        ? 'bg-gradient-to-br from-gray-700 to-gray-800' 
-        : 'bg-gradient-to-br from-gray-50 to-gray-100',
-      border: isDark ? 'border-gray-600' : 'border-gray-200',
+      bg: `bg-gradient-to-br ${colors.card.gray}`,
       shadow: isDark 
-        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.4),-8px_-8px_20px_rgba(55,65,81,0.3)]' 
+        ? 'shadow-[8px_8px_20px_rgba(0,0,0,0.6),-8px_-8px_20px_rgba(71,85,105,0.1)]' 
         : 'shadow-[8px_8px_20px_rgba(107,114,128,0.15),-8px_-8px_20px_rgba(255,255,255,0.9)]',
     },
-  };
+  }), [colors.card, isDark]);
 
-  const paddingStyles = {
+  const paddingStyles = React.useMemo(() => ({
     sm: isTouchDevice 
       ? (isMobile ? 'p-5' : 'p-4') 
       : 'p-4',
@@ -108,7 +91,7 @@ export const ClayCard: React.FC<ClayCardProps> = ({
     lg: isTouchDevice 
       ? (isMobile ? 'p-9' : 'p-8') 
       : 'p-8',
-  };
+  }), [isTouchDevice, isMobile]);
 
   const currentVariant = variantStyles[variant];
 
@@ -123,7 +106,6 @@ export const ClayCard: React.FC<ClayCardProps> = ({
         'transform-gpu will-change-transform',
         // 变体样式
         currentVariant.bg,
-        currentVariant.border,
         currentVariant.shadow,
         // 内边距
         paddingStyles[padding],
@@ -139,13 +121,13 @@ export const ClayCard: React.FC<ClayCardProps> = ({
             // 触屏设备的悬停效果（通过触摸实现）
             'focus:scale-[1.02]',
             isDark 
-              ? 'focus:shadow-[12px_12px_24px_rgba(0,0,0,0.5),-12px_-12px_24px_rgba(55,65,81,0.4)]' 
+              ? 'focus:shadow-[12px_12px_24px_rgba(0,0,0,0.7),-12px_-12px_24px_rgba(71,85,105,0.15)]' 
               : 'focus:shadow-[12px_12px_24px_rgba(148,163,184,0.25),-12px_-12px_24px_rgba(255,255,255,0.9)]'
           ] : [
             // 鼠标设备的悬停效果
             'hover:scale-[1.02]',
             isDark 
-              ? 'hover:shadow-[12px_12px_24px_rgba(0,0,0,0.5),-12px_-12px_24px_rgba(55,65,81,0.4)]' 
+              ? 'hover:shadow-[12px_12px_24px_rgba(0,0,0,0.7),-12px_-12px_24px_rgba(71,85,105,0.15)] hover:brightness-110' 
               : 'hover:shadow-[12px_12px_24px_rgba(148,163,184,0.25),-12px_-12px_24px_rgba(255,255,255,0.9)]',
             'active:scale-95'
           ]
@@ -171,13 +153,13 @@ export const ClayCardTitle: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => {
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
   
   return (
     <h3
       className={cn(
         'text-lg font-semibold mb-3 transition-colors duration-300',
-        isDark ? 'text-white' : 'text-slate-800',
+        colors.text.primary,
         className
       )}
     >
@@ -193,12 +175,12 @@ export const ClayCardContent: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => {
-  const { isDark } = useTheme();
+  const { colors } = useTheme();
   
   return (
     <div className={cn(
       'transition-colors duration-300',
-      isDark ? 'text-slate-100' : 'text-slate-600',
+      colors.text.secondary,
       className
     )}>
       {children}

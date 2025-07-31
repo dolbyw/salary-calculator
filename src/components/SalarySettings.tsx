@@ -1,46 +1,43 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayInput } from './ui/ClayInput';
 import { ClayButton } from './ui/ClayButton';
 
 import { useSalaryStore } from '../store/salaryStore';
-import { Settings, Save, Download, Trash2, Upload, Smartphone, CheckCircle, XCircle, Sun, Moon, Monitor } from 'lucide-react';
+import { Save, Download, Trash2, Upload, Sun, Moon, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import { OvertimeRate } from '../types/salary';
-import { usePWA } from '../hooks/usePWA';
+
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import { useTheme } from '../hooks/useTheme';
 import { cn } from '../lib/utils';
 
-interface SalarySettingsProps {}
-
 /**
  * 设置页面组件
  */
-export const SalarySettings: React.FC<SalarySettingsProps> = () => {
+export const SalarySettings: React.FC = React.memo(() => {
   const { overtimeRates, records, updateOvertimeRates, clearAllRecords, exportRecords, importRecords } = useSalaryStore();
-  const { isInstalled, isOnline, updateAvailable, updateSW } = usePWA();
   const { isTouchDevice, isMobile } = useTouchDevice();
-  const { themeMode, setTheme, isDark } = useTheme();
+  const { themeMode, setTheme, isDark, colors } = useTheme();
   
   const [tempRates, setTempRates] = useState<OvertimeRate>(overtimeRates);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
-   * 处理费率输入变化
+   * 处理费率输入变化 - 使用useCallback优化
    */
-  const handleRateChange = (field: keyof OvertimeRate, value: string) => {
+  const handleRateChange = useCallback((field: keyof OvertimeRate, value: string) => {
     const numValue = parseFloat(value) || 0;
     setTempRates(prev => ({
       ...prev,
       [field]: numValue,
     }));
-  };
+  }, []);
 
   /**
-   * 保存费率设置
+   * 保存费率设置 - 使用useCallback优化
    */
-  const handleSaveRates = () => {
+  const handleSaveRates = useCallback(() => {
     if (tempRates.overtime1 <= 0 || tempRates.overtime2 <= 0 || tempRates.overtime3 <= 0) {
       toast.error('费率必须大于0');
       return;
@@ -58,12 +55,12 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
     } catch (error) {
       toast.error('保存失败，请重试');
     }
-  };
+  }, [tempRates, overtimeRates, updateOvertimeRates]);
 
   /**
-   * 重置费率为默认值
+   * 重置费率为默认值 - 使用useCallback优化
    */
-  const handleResetRates = () => {
+  const handleResetRates = useCallback(() => {
     const defaultRates: OvertimeRate = {
       overtime1: 21,
       overtime2: 28,
@@ -72,7 +69,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
     setTempRates(defaultRates);
     updateOvertimeRates(defaultRates);
     toast.success('费率已重置为默认值');
-  };
+  }, [updateOvertimeRates]);
 
   /**
    * 导出数据为CSV
@@ -238,9 +235,18 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
           <ClayCardContent>
             <div className="space-y-3">
               {/* 数据统计 */}
-              <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-3">
-                <h4 className="font-medium text-orange-800 mb-2">数据统计</h4>
-                <div className="text-sm text-orange-700">
+              <div className={cn(
+                "rounded-xl p-3 transition-colors duration-300",
+                `bg-gradient-to-br ${colors.card.orange} border`
+              )}>
+                <h4 className={cn(
+                  "font-medium mb-2 transition-colors duration-300",
+                  colors.text.primary
+                )}>数据统计</h4>
+                <div className={cn(
+                  "text-sm transition-colors duration-300",
+                  colors.text.secondary
+                )}>
                   <div className="flex justify-between mb-1">
                     <span>历史记录数量:</span>
                     <span className="font-medium">{records.length} 条</span>
@@ -309,7 +315,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
               {/* 说明文字 */}
               <div className={cn(
                 "text-xs space-y-1 transition-colors duration-300",
-                isDark ? "text-slate-400" : "text-slate-500"
+                colors.text.secondary
               )}>
                 <p>• 支持导入CSV格式的薪资记录文件</p>
                 <p>• 导出的CSV文件包含所有历史记录的详细信息</p>
@@ -372,7 +378,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
               
               <div className={cn(
                 "text-xs space-y-1 transition-colors duration-300",
-                isDark ? "text-slate-400" : "text-slate-500"
+                isDark ? "text-slate-300" : "text-slate-500"
               )}>
                 <p>• 白天模式：使用明亮的配色方案</p>
                 <p>• 黑夜模式：使用深色的配色方案，减少眼部疲劳</p>
@@ -383,85 +389,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
           </ClayCardContent>
         </ClayCard>
 
-        {/* PWA状态显示 */}
-        <ClayCard variant="gray" padding={isTouchDevice ? "md" : "sm"}>
-          <ClayCardContent>
-            <div className={cn("space-y-2", isTouchDevice && "space-y-3")}>
-              <h4 className={cn(
-                "font-medium mb-2 transition-colors duration-300",
-                isDark ? "text-slate-200" : "text-slate-700",
-                isTouchDevice ? "text-base" : "text-sm"
-              )}>应用状态</h4>
-              
-              <div className="space-y-2">
-                {/* 安装状态 */}
-                <div className={cn(
-                  "flex items-center justify-between",
-                  isTouchDevice ? "text-base" : "text-sm"
-                )}>
-                  <span className={cn(
-                    "transition-colors duration-300",
-                    isDark ? "text-slate-300" : "text-slate-600"
-                  )}>PWA安装状态:</span>
-                  <div className="flex items-center gap-1">
-                    {isInstalled ? (
-                      <>
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-green-600 font-medium">已安装</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4 text-orange-500" />
-                        <span className="text-orange-600 font-medium">未安装</span>
-                      </>
-                    )}
-                  </div>
-                </div>
 
-                {/* 网络状态 */}
-                <div className={cn(
-                  "flex items-center justify-between",
-                  isTouchDevice ? "text-base" : "text-sm"
-                )}>
-                  <span className={cn(
-                    "transition-colors duration-300",
-                    isDark ? "text-slate-300" : "text-slate-600"
-                  )}>网络状态:</span>
-                  <div className="flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full ${
-                      isOnline ? 'bg-green-500' : 'bg-orange-500'
-                    }`} />
-                    <span className={`font-medium ${
-                      isOnline ? 'text-green-600' : 'text-orange-600'
-                    }`}>
-                      {isOnline ? '在线' : '离线'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 更新状态 */}
-                {updateAvailable && (
-                  <div className={cn(
-                    "flex items-center justify-between",
-                    isTouchDevice ? "text-base" : "text-sm"
-                  )}>
-                    <span className={cn(
-                      "transition-colors duration-300",
-                      isDark ? "text-slate-300" : "text-slate-600"
-                    )}>应用更新:</span>
-                    <ClayButton
-                      variant="primary"
-                      onClick={updateSW}
-                      className="text-xs px-2 py-1"
-                    >
-                      立即更新
-                    </ClayButton>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ClayCardContent>
-        </ClayCard>
 
 
       </div>
@@ -469,4 +397,6 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
 
     </div>
   );
-};
+});
+
+SalarySettings.displayName = 'SalarySettings';

@@ -4,13 +4,15 @@ import { ClayInput } from './ui/ClayInput';
 import { ClayButton } from './ui/ClayButton';
 import { MonthPickerDialog } from './ui/MonthPickerDialog';
 import { useSalaryStore } from '../store/salaryStore';
+import { useTheme } from '../hooks/useTheme';
+import { cn, formatAmount } from '../lib/utils';
 import { Calculator, Save, RotateCcw, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
  * 薪资计算器主组件
  */
-export const SalaryCalculator: React.FC = () => {
+export const SalaryCalculator: React.FC = React.memo(() => {
   const {
     baseSalary,
     overtimeHours,
@@ -24,6 +26,7 @@ export const SalaryCalculator: React.FC = () => {
     saveRecord,
     resetCurrentData,
   } = useSalaryStore();
+  const { isDark, colors } = useTheme();
 
   const [note, setNote] = useState('');
   const [newCustomItemName, setNewCustomItemName] = useState('');
@@ -116,15 +119,7 @@ export const SalaryCalculator: React.FC = () => {
     toast.success('数据已重置');
   };
 
-  /**
-   * 格式化金额显示
-   */
-  const formatAmount = (amount: number): string => {
-    return amount.toLocaleString('zh-CN', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+
 
   return (
     <div className="space-y-2 px-1">
@@ -338,9 +333,18 @@ export const SalaryCalculator: React.FC = () => {
         <ClayCard variant="default" padding="sm">
           <ClayCardContent>
             {/* 薪资概览卡片 */}
-            <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-3 text-center mb-3">
-              <div className="text-sm font-medium text-purple-700 mb-1">总薪资</div>
-              <div className="text-2xl font-bold text-purple-900">
+            <div className={cn(
+              "rounded-xl p-3 text-center mb-3 transition-colors duration-300",
+              colors.calculator.totalSalary.background
+            )}>
+              <div className={cn(
+                "text-sm font-medium mb-1 transition-colors duration-300",
+                colors.calculator.totalSalary.text
+              )}>总薪资</div>
+              <div className={cn(
+                "text-2xl font-bold transition-colors duration-300",
+                colors.calculator.totalSalary.amount
+              )}>
                 ¥{formatAmount(calculation.totalSalary)}
               </div>
             </div>
@@ -349,9 +353,18 @@ export const SalaryCalculator: React.FC = () => {
             <div className="grid grid-cols-2 gap-1.5 mb-2">
               {/* 基础薪资卡片 */}
               {calculation.baseSalaryTotal > 0 && (
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 text-center">
-                  <div className="text-xs text-blue-600 mb-1">基础薪资</div>
-                  <div className="text-lg font-bold text-blue-800">
+                <div className={cn(
+                  "rounded-lg p-2 text-center transition-colors duration-300",
+                  colors.calculator.baseSalary.background
+                )}>
+                  <div className={cn(
+                    "text-xs mb-1 transition-colors duration-300",
+                    colors.calculator.baseSalary.text
+                  )}>基础薪资</div>
+                  <div className={cn(
+                    "text-lg font-bold transition-colors duration-300",
+                    colors.calculator.baseSalary.amount
+                  )}>
                     ¥{formatAmount(calculation.baseSalaryTotal)}
                   </div>
                 </div>
@@ -359,9 +372,18 @@ export const SalaryCalculator: React.FC = () => {
               
               {/* 加班费卡片 */}
               {calculation.totalOvertimeAmount > 0 && (
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-2 text-center">
-                  <div className="text-xs text-green-600 mb-1">加班费</div>
-                  <div className="text-lg font-bold text-green-800">
+                <div className={cn(
+                  "rounded-lg p-2 text-center transition-colors duration-300",
+                  colors.calculator.overtime.background
+                )}>
+                  <div className={cn(
+                    "text-xs mb-1 transition-colors duration-300",
+                    colors.calculator.overtime.text
+                  )}>加班费</div>
+                  <div className={cn(
+                    "text-lg font-bold transition-colors duration-300",
+                    colors.calculator.overtime.amount
+                  )}>
                     ¥{formatAmount(calculation.totalOvertimeAmount)}
                   </div>
                 </div>
@@ -369,9 +391,18 @@ export const SalaryCalculator: React.FC = () => {
               
               {/* 其它加项卡片 */}
               {calculation.customItemsTotal > 0 && (
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-2 text-center">
-                  <div className="text-xs text-orange-600 mb-1">其它加项</div>
-                  <div className="text-lg font-bold text-orange-800">
+                <div className={cn(
+                  "rounded-lg p-2 text-center transition-colors duration-300",
+                  colors.calculator.customItems.background
+                )}>
+                  <div className={cn(
+                    "text-xs mb-1 transition-colors duration-300",
+                    colors.calculator.customItems.text
+                  )}>其它加项</div>
+                  <div className={cn(
+                    "text-lg font-bold transition-colors duration-300",
+                    colors.calculator.customItems.amount
+                  )}>
                     ¥{formatAmount(calculation.customItemsTotal)}
                   </div>
                 </div>
@@ -380,7 +411,11 @@ export const SalaryCalculator: React.FC = () => {
 
             {/* 详细明细 - 可折叠 */}
             <details className="group mb-3">
-              <summary className="cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors">
+              <summary className={cn(
+                "cursor-pointer text-sm font-medium transition-colors",
+                colors.calculator.details.label,
+                isDark ? "hover:text-slate-100" : "hover:text-slate-800"
+              )}>
                 <span className="inline-flex items-center gap-1">
                   查看详细明细
                   <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,9 +426,18 @@ export const SalaryCalculator: React.FC = () => {
               <div className="mt-2 space-y-2 text-xs">
                 {/* 基础薪资详情 */}
                 {calculation.baseSalaryTotal > 0 && (
-                  <div className="bg-slate-50 rounded-lg p-2">
-                    <div className="font-medium text-slate-700 mb-2">基础薪资明细</div>
-                    <div className="space-y-1">
+                  <div className={cn(
+                    "rounded-lg p-2 transition-colors duration-300",
+                    colors.calculator.details.background
+                  )}>
+                    <div className={cn(
+                      "font-medium mb-2 transition-colors duration-300",
+                      colors.calculator.details.label
+                    )}>基础薪资明细</div>
+                    <div className={cn(
+                      "space-y-1 transition-colors duration-300",
+                      colors.calculator.details.text
+                    )}>
                       {calculation.breakdown.baseSalary > 0 && (
                         <div className="flex justify-between">
                           <span>本薪</span>
@@ -430,9 +474,18 @@ export const SalaryCalculator: React.FC = () => {
                 
                 {/* 加班费详情 */}
                 {calculation.totalOvertimeAmount > 0 && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <div className="font-medium text-slate-700 mb-2">加班费明细</div>
-                    <div className="space-y-1">
+                  <div className={cn(
+                    "rounded-lg p-3 transition-colors duration-300",
+                    colors.calculator.details.background
+                  )}>
+                    <div className={cn(
+                      "font-medium mb-2 transition-colors duration-300",
+                      colors.calculator.details.label
+                    )}>加班费明细</div>
+                    <div className={cn(
+                      "space-y-1 transition-colors duration-300",
+                      colors.calculator.details.text
+                    )}>
                       {calculation.breakdown.overtime1 > 0 && (
                         <div className="flex justify-between">
                           <span>加班1</span>
@@ -457,9 +510,18 @@ export const SalaryCalculator: React.FC = () => {
                 
                 {/* 其它加项详情 */}
                 {calculation.customItemsTotal > 0 && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <div className="font-medium text-slate-700 mb-2">其它加项明细</div>
-                    <div className="space-y-1">
+                  <div className={cn(
+                    "rounded-lg p-3 transition-colors duration-300",
+                    colors.calculator.details.background
+                  )}>
+                    <div className={cn(
+                      "font-medium mb-2 transition-colors duration-300",
+                      colors.calculator.details.label
+                    )}>其它加项明细</div>
+                    <div className={cn(
+                      "space-y-1 transition-colors duration-300",
+                      colors.calculator.details.text
+                    )}>
                       {baseSalary.customItems.filter(item => item.amount > 0).map((item) => (
                         <div key={item.id} className="flex justify-between">
                           <span>{item.name}</span>
@@ -511,4 +573,6 @@ export const SalaryCalculator: React.FC = () => {
        />
     </div>
   );
-};
+});
+
+SalaryCalculator.displayName = 'SalaryCalculator';

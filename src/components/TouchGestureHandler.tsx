@@ -30,7 +30,6 @@ export const TouchGestureHandler: React.FC<TouchGestureHandlerProps> = ({
 }) => {
   const { isTouchDevice } = useTouchDevice();
   const { handleTouchStart, handleTouchEnd, getSwipeDirection, isTap } = useTouch();
-  const containerRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
   const longPressTimerRef = useRef<NodeJS.Timeout>();
   const isLongPressRef = useRef(false);
@@ -117,13 +116,12 @@ export const TouchGestureHandler: React.FC<TouchGestureHandlerProps> = ({
 
   return (
     <div
-      ref={containerRef}
       className={className}
       onTouchStart={handleTouchStartWrapper}
       onTouchEnd={handleTouchEndWrapper}
       onTouchMove={handleTouchMove}
       style={{
-        touchAction: 'pan-y', // 允许垂直滚动，但阻止水平滚动和缩放
+        touchAction: 'pan-y',
         userSelect: 'none',
         WebkitUserSelect: 'none',
         WebkitTouchCallout: 'none'
