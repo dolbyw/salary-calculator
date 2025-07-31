@@ -2,14 +2,6 @@
  * 薪资计算相关的类型定义
  */
 
-// 薪资项目类型
-export interface SalaryItem {
-  id: string;
-  name: string;
-  amount: number;
-  type: 'base' | 'overtime' | 'allowance';
-}
-
 // 加班费率配置
 export interface OvertimeRate {
   overtime1: number; // 加班1费率 (元/小时)

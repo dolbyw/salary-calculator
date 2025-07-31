@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayInput } from './ui/ClayInput';
 import { ClayButton } from './ui/ClayButton';
-import { TouchHelpButton } from './TouchHelpOverlay';
+
 import { useSalaryStore } from '../store/salaryStore';
 import { Settings, Save, Download, Trash2, Upload, Smartphone, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -158,20 +158,7 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
 
   return (
     <div className={cn("space-y-2 px-1", isMobile && "space-y-4")}>
-      <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <h1 className={cn(
-            "font-bold text-slate-800",
-            isTouchDevice ? "text-3xl" : "text-2xl"
-          )}>设置</h1>
-          {/* 触屏帮助按钮 */}
-          <TouchHelpButton />
-        </div>
-        <p className={cn(
-          "text-slate-600",
-          isTouchDevice ? "text-lg" : "text-base"
-        )}>管理费率设置和数据</p>
-      </div>
+
       <div className={cn("space-y-2", isTouchDevice && "space-y-4")}>
         {/* 加班费率设置 */}
         <ClayCard variant="pink" padding={isTouchDevice ? "md" : "sm"}>
@@ -397,6 +384,8 @@ export const SalarySettings: React.FC<SalarySettingsProps> = () => {
             </div>
           </ClayCardContent>
         </ClayCard>
+
+
       </div>
 
 

@@ -17,7 +17,17 @@ export const PWAInstallPrompt: React.FC = () => {
     if (dismissed) {
       setIsDismissed(true);
     }
-  }, []);
+    
+    // 开发环境下，添加调试信息
+    if (import.meta.env.DEV) {
+      console.log('PWA Install Prompt Debug:', {
+        isInstallable,
+        isInstalled,
+        isDismissed,
+        dismissed: localStorage.getItem('pwa-install-dismissed')
+      });
+    }
+  }, [isInstallable, isInstalled, isDismissed]);
 
   React.useEffect(() => {
     if (isInstallable && !isInstalled && !isDismissed) {

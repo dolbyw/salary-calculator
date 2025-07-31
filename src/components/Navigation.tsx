@@ -1,102 +1,147 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Calculator, History, Settings, ArrowLeft } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Calculator, History, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useTouchDevice } from '../hooks/useTouchDevice';
 
+/**
+ * 导航组件属性接口
+ */
 interface NavigationProps {
-  currentPage: 'calculator' | 'history' | 'settings' | 'pwa';
-  onPageChange: (page: 'calculator' | 'history' | 'settings' | 'pwa') => void;
+  currentPage: 'calculator' | 'history' | 'settings';
+  onPageChange: (page: 'calculator' | 'history' | 'settings') => void;
 }
 
 /**
  * 悬浮导航组件 - 固定在左下角，支持智能吸附和自动滑出
+ * 优化了触屏交互的稳定性和可用性
  */
 export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const navRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
   const lastTapRef = useRef<number>(0);
+  const debounceRef = useRef<NodeJS.Timeout>();
+  
+  // 使用统一的触屏设备检测Hook
+  const { isTouchDevice, isMobile } = useTouchDevice();
 
-  // 检测触屏设备
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    };
-    
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    
-    return () => {
-      window.removeEventListener('resize', checkTouchDevice);
-    };
+  /**
+   * 防抖函数 - 避免频繁的状态切换
+   */
+  const debounceSetVisible = useCallback((visible: boolean, delay: number = 100) => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      setIsVisible(visible);
+    }, delay);
   }, []);
 
-  // 触屏手势处理
+  /**
+   * 清理所有定时器
+   */
+  const clearAllTimers = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = undefined;
+    }
+  }, []);
+
+  /**
+   * 触屏手势处理 - 优化了边缘检测和稳定性
+   */
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (!isTouchDevice) return;
+    
     const touch = e.touches[0];
     setTouchStartX(touch.clientX);
     setTouchStartY(touch.clientY);
-  }, []);
+  }, [isTouchDevice]);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (!isTouchDevice) return;
+    
     const touch = e.changedTouches[0];
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // 检测从左边缘向右滑动手势
-    if (touchStartX < 50 && deltaX > 50 && Math.abs(deltaY) < 100) {
+    // 优化边缘滑动检测 - 增加灵敏度和容错性
+    const edgeThreshold = isMobile ? 60 : 50; // 移动设备增加边缘检测范围
+    const swipeThreshold = isMobile ? 40 : 50; // 移动设备降低滑动阈值
+    const verticalTolerance = isMobile ? 120 : 100; // 移动设备增加垂直容错
+    
+    if (touchStartX < edgeThreshold && deltaX > swipeThreshold && Math.abs(deltaY) < verticalTolerance) {
+      clearAllTimers();
       setIsVisible(true);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      // 触屏设备上显示更长时间
+      
+      // 根据设备类型调整显示时间
+      const displayDuration = isMobile ? 4000 : 3000;
       timeoutRef.current = setTimeout(() => {
         if (!isHovered) {
-          setIsVisible(false);
+          debounceSetVisible(false, 200);
         }
-      }, 3000);
+      }, displayDuration);
     }
     
-    // 检测双击屏幕边缘显示导航
+    // 优化双击边缘检测
     const now = Date.now();
-    if (touchStartX < 100 && distance < 20) {
-      if (now - lastTapRef.current < 300) {
+    const tapThreshold = isMobile ? 120 : 100;
+    const tapTolerance = isMobile ? 30 : 20;
+    
+    if (touchStartX < tapThreshold && distance < tapTolerance) {
+      const timeSinceLastTap = now - lastTapRef.current;
+      if (timeSinceLastTap < 400 && timeSinceLastTap > 50) { // 防止误触
+        clearAllTimers();
         setIsVisible(true);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
+        // 双击后显示更长时间
+        timeoutRef.current = setTimeout(() => {
+          if (!isHovered) {
+            debounceSetVisible(false, 200);
+          }
+        }, 5000);
       }
       lastTapRef.current = now;
     }
-  }, [touchStartX, touchStartY, isHovered]);
+  }, [touchStartX, touchStartY, isHovered, isTouchDevice, isMobile, clearAllTimers, debounceSetVisible]);
 
-  // 鼠标位置检测（仅非触屏设备）
+  /**
+   * 事件监听器管理 - 分离触屏和鼠标事件处理
+   */
   useEffect(() => {
     if (isTouchDevice) {
-      // 触屏设备使用触摸事件
-      document.addEventListener('touchstart', handleTouchStart, { passive: true });
-      document.addEventListener('touchend', handleTouchEnd, { passive: true });
+      // 触屏设备事件监听
+      const options = { passive: true, capture: false };
+      document.addEventListener('touchstart', handleTouchStart, options);
+      document.addEventListener('touchend', handleTouchEnd, options);
       
       return () => {
         document.removeEventListener('touchstart', handleTouchStart);
         document.removeEventListener('touchend', handleTouchEnd);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
+        clearAllTimers();
       };
     }
+  }, [isTouchDevice, handleTouchStart, handleTouchEnd, clearAllTimers]);
+
+  /**
+   * 鼠标事件处理（仅非触屏设备）
+   */
+  useEffect(() => {
+    if (isTouchDevice) return;
     
-    // 非触屏设备使用鼠标事件
     const handleMouseMove = (e: MouseEvent) => {
       const navElement = navRef.current;
       if (!navElement) return;
 
       const rect = navElement.getBoundingClientRect();
-      const buffer = 100; // 检测缓冲区域
+      const buffer = 120; // 增加检测缓冲区域
       
       // 检测鼠标是否在导航栏附近
       const isNearNav = 
@@ -106,80 +151,76 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChang
         e.clientY <= rect.bottom + buffer;
 
       if (isNearNav || isHovered) {
+        clearAllTimers();
         setIsVisible(true);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
       } else {
-        // 延迟隐藏，避免频繁切换
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
+        // 使用防抖延迟隐藏
+        clearAllTimers();
         timeoutRef.current = setTimeout(() => {
           if (!isHovered) {
-            setIsVisible(false);
+            debounceSetVisible(false, 100);
           }
         }, 1500);
       }
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      clearAllTimers();
     };
-  }, [isHovered, isTouchDevice, handleTouchStart, handleTouchEnd]);
+  }, [isHovered, isTouchDevice, clearAllTimers, debounceSetVisible]);
 
-  const handleMouseEnter = () => {
+  /**
+   * 鼠标交互处理（仅非触屏设备）
+   */
+  const handleMouseEnter = useCallback(() => {
     if (!isTouchDevice) {
       setIsHovered(true);
+      clearAllTimers();
       setIsVisible(true);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
     }
-  };
+  }, [isTouchDevice, clearAllTimers]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (!isTouchDevice) {
       setIsHovered(false);
     }
-  };
+  }, [isTouchDevice]);
 
-  // 触屏设备的触摸处理
-  const handleTouchStartNav = (e: React.TouchEvent) => {
+  /**
+   * 导航栏直接触摸处理 - 优化了触屏交互
+   */
+  const handleTouchStartNav = useCallback((e: React.TouchEvent) => {
+    if (!isTouchDevice) return;
+    
     e.stopPropagation();
     setIsHovered(true);
+    clearAllTimers();
     setIsVisible(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  };
+  }, [isTouchDevice, clearAllTimers]);
 
-  const handleTouchEndNav = () => {
-    if (isTouchDevice) {
-      setIsHovered(false);
-      // 触屏设备延迟隐藏
-      timeoutRef.current = setTimeout(() => {
-        setIsVisible(false);
-      }, 2000);
-    }
-  };
+  const handleTouchEndNav = useCallback(() => {
+    if (!isTouchDevice) return;
+    
+    setIsHovered(false);
+    // 根据设备类型调整隐藏延迟
+    const hideDelay = isMobile ? 3000 : 2500;
+    timeoutRef.current = setTimeout(() => {
+      debounceSetVisible(false, 200);
+    }, hideDelay);
+  }, [isTouchDevice, isMobile, debounceSetVisible]);
+
+  /**
+   * 组件卸载时清理资源
+   */
+  useEffect(() => {
+    return () => {
+      clearAllTimers();
+    };
+  }, [clearAllTimers]);
   // 根据当前页面显示不同的导航项
   const getNavItems = () => {
-    if (currentPage === 'pwa') {
-      return [
-        {
-          id: 'settings' as const,
-          label: '返回设置',
-          icon: ArrowLeft,
-          color: 'gray',
-        },
-      ];
-    }
-    
     return [
       {
         id: 'calculator' as const,

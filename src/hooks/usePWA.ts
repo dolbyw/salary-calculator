@@ -40,10 +40,26 @@ export const usePWA = () => {
 
     // 监听应用安装完成事件
     const handleAppInstalled = () => {
+      // 防止重复触发通知
+      const lastInstallTime = localStorage.getItem('pwa-last-install-time');
+      const currentTime = Date.now().toString();
+      
+      // 如果距离上次安装通知不到5秒，则不显示新通知
+      if (lastInstallTime && (Date.now() - parseInt(lastInstallTime)) < 5000) {
+        console.log('防止重复安装通知');
+        return;
+      }
+      
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
-      toast.success('应用已成功安装到您的设备！');
+      
+      // 记录安装时间并显示通知
+      localStorage.setItem('pwa-last-install-time', currentTime);
+      toast.success('应用已成功安装到您的设备！', {
+        duration: 4000,
+        id: 'pwa-install-success' // 使用固定ID防止重复
+      });
     };
 
     // 监听网络状态变化
@@ -99,7 +115,8 @@ export const usePWA = () => {
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
-        toast.success('正在安装应用...');
+        // 不在这里显示通知，等待appinstalled事件触发
+        console.log('用户接受了PWA安装');
       } else {
         toast.info('安装已取消');
       }

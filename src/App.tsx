@@ -5,7 +5,6 @@ import { SalaryCalculator } from './components/SalaryCalculator';
 import { SalaryHistory } from './components/SalaryHistory';
 import { SalarySettings } from './components/SalarySettings';
 import { SwipeNavigation } from './components/TouchGestureHandler';
-
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { useSalaryStore } from './store/salaryStore';
@@ -100,7 +99,7 @@ function App() {
 
       {/* Toast 通知 - 触屏设备优化 */}
       <Toaster
-        position={isMobile ? "top-center" : "top-center"}
+        position="top-center"
         toastOptions={{
           duration: isTouchDevice ? 4000 : 3000, // 触屏设备显示更长时间
           style: {
