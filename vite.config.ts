@@ -17,13 +17,13 @@ export default defineConfig({
  
     tsconfigPaths(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: [
-        '/salary-calculator/favicon.svg',
-        '/salary-calculator/apple-touch-icon.svg',
-        '/salary-calculator/icon.svg',
-        '/salary-calculator/pwa-192x192.png',
-        '/salary-calculator/pwa-512x512.png'
+        'favicon.svg',
+        'apple-touch-icon.svg', 
+        'icon.svg',
+        'pwa-192x192.png',
+        'pwa-512x512.png'
       ],
       manifest: {
         name: '薪资计算器',
@@ -33,25 +33,25 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',
-        scope: '/salary-calculator/',
-        start_url: '/salary-calculator/',
+        scope: process.env.NODE_ENV === 'production' ? '/salary-calculator/' : '/',
+        start_url: process.env.NODE_ENV === 'production' ? '/salary-calculator/' : '/',
         lang: 'zh-CN',
         categories: ['productivity', 'finance', 'utilities'],
         icons: [
           {
-            src: '/salary-calculator/pwa-192x192.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/salary-calculator/pwa-512x512.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/salary-calculator/icon.svg',
+            src: 'icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
@@ -62,30 +62,31 @@ export default defineConfig({
             name: '薪资计算',
             short_name: '计算',
             description: '快速计算薪资',
-            url: '/salary-calculator/?page=calculator',
-            icons: [{ src: '/salary-calculator/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+            url: process.env.NODE_ENV === 'production' ? '/salary-calculator/?page=calculator' : '/?page=calculator',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           },
           {
             name: '历史记录',
             short_name: '历史',
             description: '查看薪资历史记录',
-            url: '/salary-calculator/?page=history',
-            icons: [{ src: '/salary-calculator/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+            url: process.env.NODE_ENV === 'production' ? '/salary-calculator/?page=history' : '/?page=history',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           }
         ],
         prefer_related_applications: false
       },
       devOptions: {
         enabled: true,
-        type: 'module'
+        type: 'module',
+        navigateFallback: 'index.html'
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/salary-calculator/index.html',
-        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/, /^\/salary-calculator\/api\//],
+        navigateFallback: process.env.NODE_ENV === 'production' ? '/salary-calculator/index.html' : '/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/, /^\/api\//],
         cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
+        skipWaiting: false,
+        clientsClaim: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
