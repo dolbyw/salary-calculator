@@ -383,7 +383,7 @@ export const SalaryHistory: React.FC = React.memo(() => {
         cancelText={dialogState.cancelText}
         variant={dialogState.variant}
         onConfirm={dialogState.onConfirm}
-        onCancel={dialogState.onCancel || closeDialog}
+        onClose={dialogState.onCancel || closeDialog}
       />
     </div>
   );

@@ -114,4 +114,23 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // 提高chunk大小警告限制
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // 手动分割代码块以优化加载性能
+        manualChunks: {
+          // 将React相关库分离到单独的chunk
+          'react-vendor': ['react', 'react-dom'],
+          // 将图表库分离
+          'chart-vendor': ['recharts'],
+          // 将图标库分离
+          'icon-vendor': ['lucide-react'],
+          // 将状态管理库分离
+          'store-vendor': ['zustand']
+        }
+      }
+    }
+  }
 })

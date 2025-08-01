@@ -180,7 +180,7 @@ const App: React.FC = () => {
         cancelText={confirmDialog.cancelText}
         variant={confirmDialog.variant}
         onConfirm={confirmDialog.onConfirm}
-        onCancel={confirmDialog.onCancel || closeConfirmDialog}
+        onClose={confirmDialog.onCancel || closeConfirmDialog}
       />
     </div>
   );
