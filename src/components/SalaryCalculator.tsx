@@ -129,7 +129,7 @@ export const SalaryCalculator: React.FC = React.memo(() => {
           <ClayCardTitle>基础薪资</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-1.5">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <ClayInput
                   label="本薪 (元)"
                   type="number"
@@ -156,7 +156,7 @@ export const SalaryCalculator: React.FC = React.memo(() => {
                   variant="purple"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <ClayInput
                   label="餐补 (元)"
                   type="number"
@@ -203,7 +203,7 @@ export const SalaryCalculator: React.FC = React.memo(() => {
           <ClayCardTitle>加班时长</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-1.5">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <ClayInput
                   label={`加班1 (${overtimeRates.overtime1}元/小时)`}
                   type="number"
@@ -252,8 +252,8 @@ export const SalaryCalculator: React.FC = React.memo(() => {
             <div className="space-y-2">
               {/* 现有自定义项目 */}
               {baseSalary.customItems.map((item) => (
-                <div key={item.id} className="flex gap-2 items-end">
-                  <div className="flex-1">
+                <div key={item.id} className="space-y-2">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
                     <ClayInput
                       label="项目名称"
                       value={item.name}
@@ -261,8 +261,6 @@ export const SalaryCalculator: React.FC = React.memo(() => {
                       placeholder="请输入项目名称"
                       variant="pink"
                     />
-                  </div>
-                  <div className="flex-1">
                     <ClayInput
                       label="金额 (元)"
                       type="number"
@@ -276,17 +274,21 @@ export const SalaryCalculator: React.FC = React.memo(() => {
                       variant="pink"
                     />
                   </div>
-                  <ClayButton
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleRemoveCustomItem(item.id)}
-                    className="mb-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </ClayButton>
+                  <div className="flex justify-end">
+                    <ClayButton
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleRemoveCustomItem(item.id)}
+                      className="flex items-center gap-1"
+                    >
+                      <X className="w-4 h-4" />
+                      删除项目
+                    </ClayButton>
+                  </div>
                 </div>
               ))}
               
+
               {/* 添加新项目 */}
               <div className="border-t pt-2 space-y-1.5">
                 <div className="flex gap-2 items-end">
@@ -350,7 +352,7 @@ export const SalaryCalculator: React.FC = React.memo(() => {
             </div>
 
             {/* 薪资构成 - 简洁网格布局 */}
-            <div className="grid grid-cols-2 gap-1.5 mb-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-1.5 mb-2">
               {/* 基础薪资卡片 */}
               {calculation.baseSalaryTotal > 0 && (
                 <div className={cn(

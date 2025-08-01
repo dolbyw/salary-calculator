@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端布局测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .screen-size {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-frame {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+        }
+        .frame-header {
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .frame-content {
+            height: 600px;
+            overflow: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .instructions {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff9800;
+        }
+        .responsive-test {
+            margin-top: 30px;
+        }
+        .size-button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .size-button:hover {
+            background: #1976d2;
+        }
+        .current-size {
+            background: #4caf50;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>📱 薪资计算器移动端布局测试</h1>
+        
+        <div class="screen-size">
+            <h3>当前屏幕信息</h3>
+            <p>屏幕宽度: <span id="screenWidth"></span>px</p>
+            <p>屏幕高度: <span id="screenHeight"></span>px</p>
+            <p>设备像素比: <span id="devicePixelRatio"></span></p>
+            <p>用户代理: <span id="userAgent"></span></p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 测试说明</h3>
+            <p>1. 打开浏览器开发者工具 (F12)</p>
+            <p>2. 点击设备模拟器图标 (📱)</p>
+            <p>3. 选择不同的设备型号测试响应式布局</p>
+            <p>4. 检查以下关键点：</p>
+            <ul>
+                <li>✅ 输入框大小适中，易于触摸</li>
+                <li>✅ 按钮间距合理，避免误触</li>
+                <li>✅ 文字大小清晰可读</li>
+                <li>✅ 卡片布局在小屏幕上正确换行</li>
+                <li>✅ 导航栏在触屏设备上正确隐藏/显示</li>
+                <li>✅ PWA安装提示适配移动端</li>
+            </ul>
+        </div>
+
+        <div class="responsive-test">
+            <h3>🔧 快速测试不同屏幕尺寸</h3>
+            <p>点击下方按钮快速切换到常见手机屏幕尺寸：</p>
+            
+            <button class="size-button" onclick="resizeWindow(375, 667)">iPhone SE (375×667)</button>
+            <button class="size-button" onclick="resizeWindow(390, 844)">iPhone 12 (390×844)</button>
+            <button class="size-button" onclick="resizeWindow(414, 896)">iPhone 12 Pro Max (414×896)</button>
+            <button class="size-button" onclick="resizeWindow(360, 640)">Samsung Galaxy S8 (360×640)</button>
+            <button class="size-button" onclick="resizeWindow(412, 915)">Pixel 5 (412×915)</button>
+            <button class="size-button" onclick="resizeWindow(320, 568)">iPhone 5/SE (320×568)</button>
+            
+            <div class="current-size" id="currentSize">当前窗口大小: 加载中...</div>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-frame">
+                <div class="frame-header">薪资计算器应用</div>
+                <div class="frame-content">
+                    <iframe src="http://localhost:5177/" title="薪资计算器"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #e8f5e8; border-radius: 8px;">
+            <h3>✅ 移动端优化检查清单</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div>
+                    <h4>📱 触摸交互</h4>
+                    <ul>
+                        <li>按钮最小44px×44px</li>
+                        <li>输入框易于点击</li>
+                        <li>滑动导航流畅</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>📐 布局适配</h4>
+                    <ul>
+                        <li>网格布局响应式</li>
+                        <li>文字大小适中</li>
+                        <li>间距合理</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>🎨 视觉效果</h4>
+                    <ul>
+                        <li>卡片阴影适中</li>
+                        <li>颜色对比度足够</li>
+                        <li>动画流畅</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateScreenInfo() {
+            document.getElementById('screenWidth').textContent = window.innerWidth;
+            document.getElementById('screenHeight').textContent = window.innerHeight;
+            document.getElementById('devicePixelRatio').textContent = window.devicePixelRatio;
+            document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 100) + '...';
+            document.getElementById('currentSize').textContent = `当前窗口大小: ${window.innerWidth} × ${window.innerHeight}px`;
+        }
+
+        function resizeWindow(width, height) {
+            // 注意：现代浏览器出于安全考虑，可能不允许脚本调整窗口大小
+            // 这个功能主要用于提醒用户手动调整
+            alert(`请手动调整浏览器窗口到 ${width} × ${height}px\n或使用开发者工具的设备模拟器`);
+        }
+
+        // 页面加载时更新信息
+        updateScreenInfo();
+        
+        // 窗口大小改变时更新信息
+        window.addEventListener('resize', updateScreenInfo);
+        
+        // 每秒更新一次，确保信息准确
+        setInterval(updateScreenInfo, 1000);
+    </script>
+</body>
+</html>

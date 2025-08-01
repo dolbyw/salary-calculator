@@ -909,9 +909,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
       
       {/* 导出对话框 */}
       {showExportDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <ClayCard variant="default" className="max-w-md w-full mx-4">
-            <ClayCardTitle>导出图表</ClayCardTitle>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <ClayCard variant="default" className={cn(
+            "w-full max-w-md",
+            isTouchDevice ? "mx-2" : "mx-4"
+          )}>
+            <ClayCardTitle className={cn(
+              isTouchDevice ? "text-xl" : "text-lg"
+            )}>导出图表</ClayCardTitle>
             <ClayCardContent>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
@@ -920,32 +925,68 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                     id="includeDetails"
                     checked={includeDetails}
                     onChange={(e) => setIncludeDetails(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
+                    className={cn(
+                      "text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2",
+                      isTouchDevice ? "w-5 h-5" : "w-4 h-4"
+                    )}
                   />
-                  <label htmlFor="includeDetails" className="text-sm font-medium text-gray-700">
+                  <label 
+                    htmlFor="includeDetails" 
+                    className={cn(
+                      "font-medium text-gray-700",
+                      isTouchDevice ? "text-base" : "text-sm"
+                    )}
+                  >
                     包含薪资明细
                   </label>
                 </div>
                 
-                <div className="text-sm text-gray-500">
+                <div className={cn(
+                  "text-gray-500",
+                  isTouchDevice ? "text-base" : "text-sm"
+                )}>
                   {includeDetails ? '将导出图表和最新薪资明细' : '仅导出图表'}
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className={cn(
+                "mt-6 gap-3",
+                isTouchDevice ? "grid grid-cols-1" : "flex justify-end"
+              )}>
                 <ClayButton
                   variant="secondary"
                   onClick={() => setShowExportDialog(false)}
+                  className={cn(
+                    isTouchDevice ? "w-full py-3 text-base" : ""
+                  )}
                 >
                   取消
                 </ClayButton>
                 <ClayButton
                   variant="primary"
                   onClick={() => exportChartImage(includeDetails)}
-                  className="flex items-center gap-2"
+                  className={cn(
+                    "flex items-center gap-2",
+                    isTouchDevice ? "w-full py-3 text-base justify-center" : ""
+                  )}
                 >
-                  <Download className="w-4 h-4" />
-                  导出
+                  <Download className={cn(
+                    isTouchDevice ? "w-5 h-5" : "w-4 h-4"
+                  )} />
+                  导出图片
+                </ClayButton>
+                <ClayButton
+                  variant="success"
+                  onClick={exportChartData}
+                  className={cn(
+                    "flex items-center gap-2",
+                    isTouchDevice ? "w-full py-3 text-base justify-center" : ""
+                  )}
+                >
+                  <Download className={cn(
+                    isTouchDevice ? "w-5 h-5" : "w-4 h-4"
+                  )} />
+                  导出数据
                 </ClayButton>
               </div>
             </ClayCardContent>

@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayButton } from './ui/ClayButton';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { useSalaryStore } from '../store/salaryStore';
 import { SalaryCharts } from './SalaryCharts';
 import { useTheme } from '../hooks/useTheme';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import { cn, formatAmount, formatDate } from '../lib/utils';
 import { History, Trash2, Calendar, DollarSign, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,6 +17,7 @@ import { SalaryRecord } from '../types/salary';
 export const SalaryHistory: React.FC = React.memo(() => {
   const { records, deleteRecord, clearAllRecords } = useSalaryStore();
   const { isDark, colors } = useTheme();
+  const { showConfirm, dialogState, closeDialog } = useConfirmDialog();
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(true);
 
@@ -29,17 +32,25 @@ export const SalaryHistory: React.FC = React.memo(() => {
   /**
    * 清空所有记录 - 使用useCallback优化
    */
-  const handleClearAll = useCallback(() => {
+  const handleClearAll = useCallback(async () => {
     if (records.length === 0) {
       toast.error('没有记录可清空');
       return;
     }
     
-    if (window.confirm('确定要清空所有记录吗？此操作不可撤销。')) {
+    const confirmed = await showConfirm({
+      title: '清空所有记录',
+      message: '确定要清空所有记录吗？此操作不可撤销。',
+      confirmText: '清空',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+    
+    if (confirmed) {
       clearAllRecords();
       toast.success('所有记录已清空');
     }
-  }, [records.length, clearAllRecords]);
+  }, [records.length, clearAllRecords, showConfirm]);
 
   /**
    * 切换记录详情显示 - 使用useCallback优化
@@ -47,8 +58,6 @@ export const SalaryHistory: React.FC = React.memo(() => {
   const toggleRecordDetails = useCallback((id: string) => {
     setExpandedRecord(expandedRecord === id ? null : id);
   }, [expandedRecord]);
-
-
 
   /**
    * 计算记录的详细信息
@@ -77,14 +86,12 @@ export const SalaryHistory: React.FC = React.memo(() => {
 
   return (
     <div className="space-y-2 px-1">
-
-
       {/* 图表区域 */}
-       {showCharts && records.length > 0 && (
-         <div className="mb-3">
-           <SalaryCharts />
-         </div>
-       )}
+      {showCharts && records.length > 0 && (
+        <div className="mb-3">
+          <SalaryCharts />
+        </div>
+      )}
 
       {/* 操作按钮 */}
       <div className="flex justify-between items-center">
@@ -165,7 +172,7 @@ export const SalaryHistory: React.FC = React.memo(() => {
                         {record.note}
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
                       <ClayButton
                         variant="secondary"
                         size="sm"
@@ -366,8 +373,18 @@ export const SalaryHistory: React.FC = React.memo(() => {
           })}
         </div>
       )}
+      
+      {/* 确认对话框 */}
+      <ConfirmDialog 
+        isOpen={dialogState.isOpen}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        variant={dialogState.variant}
+        onConfirm={dialogState.onConfirm}
+        onCancel={dialogState.onCancel || closeDialog}
+      />
     </div>
   );
 });
-
-SalaryHistory.displayName = 'SalaryHistory';

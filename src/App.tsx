@@ -7,9 +7,11 @@ import { SalarySettings } from './components/SalarySettings';
 import { SwipeNavigation } from './components/TouchGestureHandler';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { ConfirmDialog } from './components/ui/ConfirmDialog';
 import { useSalaryStore } from './store/salaryStore';
 import { useTheme } from './hooks/useTheme';
 import { useTouchDevice } from './hooks/useTouchDevice';
+import { usePWA } from './hooks/usePWA';
 import { cn } from './lib/utils';
 
 /**
@@ -20,6 +22,7 @@ const App: React.FC = () => {
   const { calculateSalary } = useSalaryStore();
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { isDark, colors } = useTheme();
+  const { confirmDialog, closeConfirmDialog } = usePWA();
   
   // 页面顺序，用于滑动导航
   const pageOrder: ('calculator' | 'history' | 'settings')[] = ['calculator', 'history', 'settings'];
@@ -108,13 +111,13 @@ const App: React.FC = () => {
         {isTouchDevice && (
           <div className={cn(
             "fixed left-1/2 transform -translate-x-1/2 z-40 transition-all duration-300",
-            isMobile ? "bottom-6" : "bottom-8"
+            isMobile ? "bottom-4" : "bottom-8"
           )}>
             <div className={cn(
               'flex backdrop-blur-sm rounded-full shadow-lg transition-all duration-300 border',
               colors.indicator.background,
               colors.indicator.border,
-              isMobile ? 'space-x-3 px-4 py-3' : 'space-x-2 px-3 py-2'
+              isMobile ? 'space-x-2 px-3 py-2' : 'space-x-2 px-3 py-2'
             )}>
               {pageOrder.map((page, index) => {
                 const isActive = currentPage === page;
@@ -129,16 +132,22 @@ const App: React.FC = () => {
                      key={page}
                      onClick={() => handlePageChange(page)}
                      className={cn(
-                       'rounded-full transition-all duration-300 transform-gpu',
+                       'rounded-full transition-all duration-300 transform-gpu flex items-center justify-center',
                        'active:scale-90 touch-manipulation',
-                       isMobile ? 'w-3 h-3' : 'w-2.5 h-2.5',
+                       isMobile ? 'w-8 h-6 text-xs px-2' : 'w-2.5 h-2.5',
                        isActive 
                          ? cn(colors.indicator.active, 'scale-125 shadow-sm')
                          : cn(colors.indicator.inactive, 'hover:scale-110'),
                        !isActive && `hover:${colors.indicator.hover}`
                      )}
                      aria-label={`切换到${pageLabels[page]}页面`}
-                   />
+                   >
+                     {isMobile && (
+                       <span className="text-xs font-medium">
+                         {pageLabels[page].slice(0, 2)}
+                       </span>
+                     )}
+                   </button>
                 );
               })}
             </div>
@@ -161,6 +170,18 @@ const App: React.FC = () => {
             ),
           }}
         />
+      
+      {/* 确认对话框 */}
+      <ConfirmDialog 
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        variant={confirmDialog.variant}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={confirmDialog.onCancel || closeConfirmDialog}
+      />
     </div>
   );
 }

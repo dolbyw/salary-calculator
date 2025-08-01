@@ -166,7 +166,7 @@ export const SalarySettings: React.FC = React.memo(() => {
           <ClayCardTitle>加班费率设置</ClayCardTitle>
           <ClayCardContent>
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
                 <ClayInput
                   label="加班1费率 (元/小时)"
                   type="number"
@@ -208,7 +208,7 @@ export const SalarySettings: React.FC = React.memo(() => {
                 variant="pink"
               />
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
                 <ClayButton
                   variant="primary"
                   onClick={handleSaveRates}
@@ -274,25 +274,25 @@ export const SalarySettings: React.FC = React.memo(() => {
 
               {/* 操作按钮 */}
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <ClayButton
-                     variant="primary"
-                     onClick={handleImportData}
-                     className="flex items-center justify-center gap-2 text-sm"
-                   >
-                    <Upload className="w-4 h-4" />
-                    导入数据
-                  </ClayButton>
-                  <ClayButton
-                    variant="success"
-                    onClick={handleExportData}
-                    disabled={records.length === 0}
-                    className="flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    导出数据
-                  </ClayButton>
-                </div>
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+                <ClayButton
+                   variant="primary"
+                   onClick={handleImportData}
+                   className="flex items-center justify-center gap-2 text-sm"
+                 >
+                  <Upload className="w-4 h-4" />
+                  导入数据
+                </ClayButton>
+                <ClayButton
+                  variant="success"
+                  onClick={handleExportData}
+                  disabled={records.length === 0}
+                  className="flex items-center justify-center gap-2 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  导出数据
+                </ClayButton>
+              </div>
                 
                 <ClayButton
                   variant="danger"

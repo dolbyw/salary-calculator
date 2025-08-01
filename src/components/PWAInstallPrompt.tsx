@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download, X, Smartphone, Monitor, AlertCircle, CheckCircle } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
+import { IOSInstallGuide } from './ui/IOSInstallGuide';
 
 /**
  * PWA安装提示组件
@@ -11,6 +12,7 @@ export const PWAInstallPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = React.useState(false);
   const [isDismissed, setIsDismissed] = React.useState(false);
   const [showDebugInfo, setShowDebugInfo] = React.useState(false);
+  const [showIOSGuide, setShowIOSGuide] = React.useState(false);
 
   React.useEffect(() => {
     // 开发环境下，添加调试信息
@@ -64,7 +66,7 @@ export const PWAInstallPrompt: React.FC = () => {
     
     if (isIOSSafari) {
       // iOS Safari特殊处理：显示安装指导
-      alert('在Safari中安装应用：\n\n1. 点击底部的"分享"按钮 📤\n2. 向下滚动找到"添加到主屏幕"\n3. 点击"添加"完成安装\n\n安装后可以像原生应用一样使用！');
+      setShowIOSGuide(true);
       setIsVisible(false);
       return;
     }
@@ -126,6 +128,10 @@ export const PWAInstallPrompt: React.FC = () => {
   return (
     <>
       <DebugInfo />
+      <IOSInstallGuide 
+        isOpen={showIOSGuide} 
+        onClose={() => setShowIOSGuide(false)} 
+      />
       {isVisible && (
         <div className="fixed top-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl shadow-2xl p-4 transform transition-all duration-300 ease-out animate-in slide-in-from-top">
@@ -166,23 +172,22 @@ export const PWAInstallPrompt: React.FC = () => {
 
             </div>
 
-            <div className="flex space-x-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+              <button
+                onClick={handleDismiss}
+                className="w-full px-4 py-2 text-purple-200 hover:text-white transition-colors text-sm rounded-xl border border-purple-300/30 hover:bg-purple-500/20"
+              >
+                稍后再说
+              </button>
               <button
                 onClick={handleInstall}
-                className="flex-1 bg-white text-purple-600 font-medium py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors text-sm flex items-center justify-center space-x-1"
+                className="w-full bg-white text-purple-600 font-medium py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors text-sm flex items-center justify-center space-x-1"
               >
                 <Download className="w-4 h-4" />
                 <span>
                   {import.meta.env.DEV ? '测试安装' : '立即安装'}
                 </span>
               </button>
-              <button
-                onClick={handleDismiss}
-                className="px-4 py-2 text-purple-200 hover:text-white transition-colors text-sm"
-              >
-                稍后
-              </button>
-
             </div>
           </div>
         </div>

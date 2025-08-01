@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useConfirmDialog } from './useConfirmDialog';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -21,6 +22,7 @@ export const usePWA = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
+  const { showConfirm, dialogState, closeDialog } = useConfirmDialog();
 
   // 检测PWA安装状态的回调函数
   const checkIfInstalled = useCallback(() => {
@@ -234,7 +236,14 @@ export const usePWA = () => {
   const installPWA = async () => {
     if (!deferredPrompt) {
       if (import.meta.env.DEV) {
-        const shouldInstall = confirm('这是开发环境的模拟安装提示。\n\n点击"确定"模拟安装PWA应用。');
+        const shouldInstall = await showConfirm({
+          title: '开发环境模拟安装',
+          message: '这是开发环境的模拟安装提示。\n\n点击"确定"模拟安装PWA应用。',
+          confirmText: '模拟安装',
+          cancelText: '取消',
+          variant: 'info'
+        });
+        
         if (shouldInstall) {
           // 模拟安装过程
           toast.success('模拟安装成功！在生产环境中，这将是真实的PWA安装。', {
@@ -399,7 +408,10 @@ export const usePWA = () => {
     updateSW,
     checkInstallability,
     checkNetworkStatus,
-    resetPWAStatus
+    resetPWAStatus,
+    // 确认对话框相关
+    confirmDialog: dialogState,
+    closeConfirmDialog: closeDialog
   };
 };
 
