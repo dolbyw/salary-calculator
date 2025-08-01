@@ -791,7 +791,6 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
               <h3 className="text-xl font-semibold text-gray-900">
                 {enlargedChart === 'pie' && '薪资组成分析'}
                 {enlargedChart === 'line' && '月度薪资趋势'}
-                {enlargedChart === 'bar' && (barChartMode === 'single' ? '单月薪资占比' : '月度薪资对比')}
               </h3>
               <ClayButton
                 variant="secondary"
