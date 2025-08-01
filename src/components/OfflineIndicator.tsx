@@ -13,13 +13,19 @@ export const OfflineIndicator: React.FC = () => {
 
   React.useEffect(() => {
     if (!isOnline) {
+      // 离线状态：显示3秒后自动隐藏
       setShowOfflineMessage(true);
       setWasOffline(true);
+      const timer = setTimeout(() => {
+        setShowOfflineMessage(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     } else if (wasOffline && isOnline) {
-      // 从离线恢复到在线状态
+      // 从离线恢复到在线状态：显示3秒后隐藏
       setShowOfflineMessage(true);
       const timer = setTimeout(() => {
         setShowOfflineMessage(false);
+        setWasOffline(false); // 重置离线状态标记
       }, 3000);
       return () => clearTimeout(timer);
     }

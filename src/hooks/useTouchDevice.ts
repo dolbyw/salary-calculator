@@ -75,18 +75,25 @@ export const useTouch = () => {
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
-    // 最小滑动距离
-    const minSwipeDistance = 50;
+    // 根据屏幕尺寸调整最小滑动距离
+    const screenWidth = window.innerWidth;
+    const minSwipeDistance = screenWidth < 640 ? 30 : screenWidth < 1024 ? 40 : 50;
+    const verticalTolerance = screenWidth < 640 ? 80 : 100;
 
     if (absDeltaX < minSwipeDistance && absDeltaY < minSwipeDistance) {
       return null;
     }
 
-    if (absDeltaX > absDeltaY) {
+    // 水平滑动需要满足：水平距离大于最小值且垂直偏移在容忍范围内
+    if (absDeltaX > absDeltaY && absDeltaX >= minSwipeDistance && absDeltaY <= verticalTolerance) {
       return deltaX > 0 ? 'right' : 'left';
-    } else {
+    } 
+    // 垂直滑动需要满足：垂直距离明显大于水平距离
+    else if (absDeltaY > absDeltaX && absDeltaY >= minSwipeDistance) {
       return deltaY > 0 ? 'down' : 'up';
     }
+    
+    return null;
   };
 
   const getSwipeDistance = () => {

@@ -124,7 +124,9 @@ export const TouchGestureHandler: React.FC<TouchGestureHandlerProps> = ({
         touchAction: 'pan-y',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        WebkitTouchCallout: 'none'
+        WebkitTouchCallout: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        overscrollBehavior: 'contain'
       }}
     >
       {children}
@@ -134,7 +136,7 @@ export const TouchGestureHandler: React.FC<TouchGestureHandlerProps> = ({
 
 /**
  * 页面滑动导航组件
- * 支持左右滑动切换页面
+ * 支持左右滑动切换页面，针对触屏设备优化
  */
 interface SwipeNavigationProps {
   children: React.ReactNode;
@@ -151,12 +153,17 @@ export const SwipeNavigation: React.FC<SwipeNavigationProps> = ({
   onPageChange,
   className
 }) => {
-  const { isTouchDevice } = useTouchDevice();
+  const { isTouchDevice, isMobile } = useTouchDevice();
 
   const handleSwipeLeft = useCallback(() => {
     const currentIndex = pages.indexOf(currentPage);
     if (currentIndex < pages.length - 1) {
       onPageChange(pages[currentIndex + 1]);
+      
+      // 触觉反馈
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
     }
   }, [currentPage, pages, onPageChange]);
 
@@ -164,6 +171,11 @@ export const SwipeNavigation: React.FC<SwipeNavigationProps> = ({
     const currentIndex = pages.indexOf(currentPage);
     if (currentIndex > 0) {
       onPageChange(pages[currentIndex - 1]);
+      
+      // 触觉反馈
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
     }
   }, [currentPage, pages, onPageChange]);
 

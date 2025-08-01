@@ -9,10 +9,8 @@ import { registerSW } from 'virtual:pwa-register';
 const updateSW = registerSW({
   onNeedRefresh() {
     console.log('PWA需要更新');
-    // 提示用户更新而不是自动更新
-    if (confirm('发现新版本，是否立即更新？')) {
-      updateSW(true);
-    }
+    // 静默更新，不显示提示
+    updateSW(true);
   },
   onOfflineReady() {
     console.log('PWA离线就绪');

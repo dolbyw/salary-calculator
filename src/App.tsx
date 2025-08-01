@@ -84,40 +84,60 @@ const App: React.FC = () => {
         currentPage={currentPage}
         pages={pageOrder}
         onPageChange={handlePageChange}
-        className={`container mx-auto px-3 py-4 max-w-5xl ${isTouchDevice ? 'pb-24' : 'pb-20'}`}
+        className={cn(
+          "container mx-auto max-w-5xl transition-all duration-300",
+          isTouchDevice ? (
+            isMobile ? "px-4 py-4 pb-20" : "px-6 py-6 pb-24"
+          ) : "px-3 py-4 pb-20"
+        )}
       >
         {/* 页面内容区域 */}
-        <div className={`transition-all duration-300 ease-out ${
-          isTouchDevice ? 'touch-manipulation' : ''
-        }`}>
-          <main className={isMobile ? 'space-y-4' : 'space-y-6'}>
+        <div className={cn(
+          "transition-all duration-300 ease-out",
+          isTouchDevice && "touch-manipulation"
+        )}>
+          <main className={cn(
+            "transition-all duration-300",
+            isMobile ? "space-y-4" : isTouchDevice ? "space-y-5" : "space-y-6"
+          )}>
             {renderCurrentPage}
           </main>
         </div>
         
-        {/* 触屏设备页面指示器 */}
+        {/* 触屏设备页面指示器 - 优化手机屏幕适配 */}
         {isTouchDevice && (
-          <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-40">
+          <div className={cn(
+            "fixed left-1/2 transform -translate-x-1/2 z-40 transition-all duration-300",
+            isMobile ? "bottom-6" : "bottom-8"
+          )}>
             <div className={cn(
-              'flex space-x-2 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg transition-colors duration-300',
+              'flex backdrop-blur-sm rounded-full shadow-lg transition-all duration-300 border',
               colors.indicator.background,
-              colors.indicator.border
+              colors.indicator.border,
+              isMobile ? 'space-x-3 px-4 py-3' : 'space-x-2 px-3 py-2'
             )}>
               {pageOrder.map((page, index) => {
                 const isActive = currentPage === page;
+                const pageLabels = {
+                  calculator: '计算器',
+                  history: '历史记录', 
+                  settings: '设置'
+                };
+                
                 return (
                   <button
                      key={page}
                      onClick={() => handlePageChange(page)}
                      className={cn(
-                       'w-2 h-2 rounded-full transition-all duration-300',
+                       'rounded-full transition-all duration-300 transform-gpu',
+                       'active:scale-90 touch-manipulation',
+                       isMobile ? 'w-3 h-3' : 'w-2.5 h-2.5',
                        isActive 
-                         ? colors.indicator.active + ' scale-125'
-                         : colors.indicator.inactive,
-                       'hover:scale-125',
-                       colors.indicator.hover
+                         ? cn(colors.indicator.active, 'scale-125 shadow-sm')
+                         : cn(colors.indicator.inactive, 'hover:scale-110'),
+                       !isActive && `hover:${colors.indicator.hover}`
                      )}
-                     aria-label={`切换到${page === 'calculator' ? '计算器' : page === 'history' ? '历史记录' : '设置'}页面`}
+                     aria-label={`切换到${pageLabels[page]}页面`}
                    />
                 );
               })}

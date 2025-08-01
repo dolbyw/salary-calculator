@@ -14,7 +14,7 @@ interface NavigationProps {
 
 /**
  * 悬浮导航组件 - 固定在左下角，支持智能吸附和自动滑出
- * 优化了触屏交互的稳定性和可用性
+ * 在触屏环境下隐藏，使用滑动导航和底部指示器
  */
 const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -29,6 +29,11 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
   // 使用统一的触屏设备检测Hook和主题Hook
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { isDark, colors } = useTheme();
+
+  // 在触屏设备上不显示悬浮导航栏
+  if (isTouchDevice) {
+    return null;
+  }
 
   /**
    * 防抖函数 - 避免频繁的状态切换

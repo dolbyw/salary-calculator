@@ -15,22 +15,18 @@ export const PWAInstallPrompt: React.FC = () => {
   React.useEffect(() => {
     // 开发环境下，添加调试信息
     if (import.meta.env.DEV) {
-      const installConditions = checkInstallability();
       console.log('PWA Install Prompt Debug:', {
         isInstallable,
         isInstalled,
         canInstall,
-        isDismissed,
-        installConditions
+        isDismissed
       });
     }
-  }, [isInstallable, isInstalled, canInstall, isDismissed, checkInstallability]);
+  }, [isInstallable, isInstalled, canInstall, isDismissed]);
 
   React.useEffect(() => {
     // 检查是否应该显示安装提示
-    const shouldShow = (isInstallable || (import.meta.env.DEV && canInstall)) && 
-                      !isInstalled && 
-                      !isDismissed;
+    const shouldShow = (isInstallable || canInstall) && !isInstalled && !isDismissed;
     
     if (shouldShow) {
       // 延迟显示，确保页面加载完成
@@ -47,7 +43,6 @@ export const PWAInstallPrompt: React.FC = () => {
   // 开发环境下的调试功能
   React.useEffect(() => {
     if (import.meta.env.DEV) {
-      // 添加键盘快捷键显示调试信息
       const handleKeyPress = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.shiftKey && e.key === 'P') {
           setShowDebugInfo(!showDebugInfo);
@@ -63,8 +58,23 @@ export const PWAInstallPrompt: React.FC = () => {
    * 处理安装按钮点击
    */
   const handleInstall = async () => {
-    await installPWA();
-    setIsVisible(false);
+    // 检测iOS Safari
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIOSSafari = /iphone|ipad|ipod/i.test(userAgent) && userAgent.includes('safari') && !userAgent.includes('chrome');
+    
+    if (isIOSSafari) {
+      // iOS Safari特殊处理：显示安装指导
+      alert('在Safari中安装应用：\n\n1. 点击底部的"分享"按钮 📤\n2. 向下滚动找到"添加到主屏幕"\n3. 点击"添加"完成安装\n\n安装后可以像原生应用一样使用！');
+      setIsVisible(false);
+      return;
+    }
+    
+    try {
+      await installPWA();
+      setIsVisible(false);
+    } catch (error) {
+      console.error('安装失败:', error);
+    }
   };
 
   /**
@@ -79,8 +89,6 @@ export const PWAInstallPrompt: React.FC = () => {
   const DebugInfo = () => {
     if (!import.meta.env.DEV || !showDebugInfo) return null;
     
-    const conditions = checkInstallability();
-    
     return (
       <div className="fixed top-4 left-4 z-50 bg-black/80 text-white p-4 rounded-lg text-xs max-w-sm">
         <div className="flex items-center justify-between mb-2">
@@ -90,53 +98,18 @@ export const PWAInstallPrompt: React.FC = () => {
           </button>
         </div>
         <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            {isInstallable ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
-            <span>可安装: {isInstallable ? '是' : '否'}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {isInstalled ? <AlertCircle className="w-3 h-3 text-red-400" /> : <CheckCircle className="w-3 h-3 text-green-400" />}
-            <span>已安装: {isInstalled ? '是' : '否'}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {canInstall ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
-            <span>可安装(检测): {canInstall ? '是' : '否'}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {conditions.hasServiceWorker ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
-            <span>Service Worker: {conditions.hasServiceWorker ? '支持' : '不支持'}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {conditions.hasManifest ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
-            <span>Manifest: {conditions.hasManifest ? '存在' : '缺失'}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            {conditions.isHTTPS ? <CheckCircle className="w-3 h-3 text-green-400" /> : <AlertCircle className="w-3 h-3 text-red-400" />}
-            <span>HTTPS: {conditions.isHTTPS ? '是' : '否'}</span>
-          </div>
-          <div className="mt-2 pt-2 border-t border-gray-600">
-            <div className="text-xs text-gray-300 space-y-1">
-              <div>显示模式: {window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'}</div>
-              <div>iOS独立: {(window.navigator as any).standalone ? '是' : '否'}</div>
-              <div>localStorage标记: {localStorage.getItem('pwa-installed') || '无'}</div>
-              <div>安装时间: {localStorage.getItem('pwa-install-time') ? new Date(parseInt(localStorage.getItem('pwa-install-time')!)).toLocaleString() : '无'}</div>
-              <div>当前时间: {new Date().toLocaleTimeString()}</div>
-              <div>页面URL: {window.location.href}</div>
-              <div>Referrer: {document.referrer || '无'}</div>
-            </div>
-            {import.meta.env.DEV && (
-              <div className="mt-2 pt-2 border-t border-gray-500">
-                <button
-                  onClick={resetPWAStatus}
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition-colors"
-                >
-                  重置PWA状态
-                </button>
-                <div className="text-xs text-gray-400 mt-1">
-                  点击重置所有PWA安装状态
-                </div>
-              </div>
-            )}
+          <div>可安装: {isInstallable ? '是' : '否'}</div>
+          <div>已安装: {isInstalled ? '是' : '否'}</div>
+          <div>支持安装: {canInstall ? '是' : '否'}</div>
+          <div>显示模式: {window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'}</div>
+          <div>localStorage: {localStorage.getItem('pwa-installed') || '无'}</div>
+          <div className="mt-2 pt-2 border-t border-gray-500">
+            <button
+              onClick={resetPWAStatus}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition-colors"
+            >
+              重置PWA状态
+            </button>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-600 text-xs text-gray-300">
@@ -186,12 +159,11 @@ export const PWAInstallPrompt: React.FC = () => {
                 <Download className="w-3 h-3" />
                 <span>离线使用，随时计算薪资</span>
               </div>
-              {import.meta.env.DEV && (
-                <div className="flex items-center space-x-2 text-xs text-purple-100">
-                  <AlertCircle className="w-3 h-3" />
-                  <span>开发模式：实际安装需在生产环境</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-2 text-xs text-purple-100">
+                <Smartphone className="w-3 h-3" />
+                <span>支持主流浏览器安装</span>
+              </div>
+
             </div>
 
             <div className="flex space-x-2">
@@ -200,7 +172,9 @@ export const PWAInstallPrompt: React.FC = () => {
                 className="flex-1 bg-white text-purple-600 font-medium py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors text-sm flex items-center justify-center space-x-1"
               >
                 <Download className="w-4 h-4" />
-                <span>{import.meta.env.DEV ? '测试安装' : '立即安装'}</span>
+                <span>
+                  {import.meta.env.DEV ? '测试安装' : '立即安装'}
+                </span>
               </button>
               <button
                 onClick={handleDismiss}
@@ -208,15 +182,7 @@ export const PWAInstallPrompt: React.FC = () => {
               >
                 稍后
               </button>
-              {import.meta.env.DEV && (
-                <button
-                  onClick={() => setShowDebugInfo(!showDebugInfo)}
-                  className="px-2 py-2 text-purple-200 hover:text-white transition-colors text-xs"
-                  title="显示调试信息"
-                >
-                  🐛
-                </button>
-              )}
+
             </div>
           </div>
         </div>
