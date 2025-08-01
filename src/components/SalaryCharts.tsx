@@ -1,11 +1,11 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayButton } from './ui/ClayButton';
 import { MonthSelector } from './ui/MonthSelector';
 import { useSalaryStore, calculateSalaryDetails } from '../store/salaryStore';
 import { useTouchDevice, useHapticFeedback } from '../hooks/useTouchDevice';
-import { PieChart as PieChartIcon, TrendingUp, BarChart3, Download, Image } from 'lucide-react';
+import { PieChart as PieChartIcon, TrendingUp, Download, Image } from 'lucide-react';
 import { ChartData, MonthlySalaryStats } from '../types/salary';
 import { cn, formatAmount, formatDate } from '../lib/utils';
 import html2canvas from 'html2canvas';
@@ -18,24 +18,78 @@ interface SalaryChartsProps {
  * 薪资图表组件
  */
 export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
-  const [activeChart, setActiveChart] = useState<'pie' | 'line' | 'bar'>('pie');
+  const [activeChart, setActiveChart] = useState<'pie' | 'line'>('pie');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [startMonth, setStartMonth] = useState<string>('');
   const [endMonth, setEndMonth] = useState<string>('');
-  const [barChartMode, setBarChartMode] = useState<'range' | 'single'>('range');
+  // 移除柱状图模式状态
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [includeDetails, setIncludeDetails] = useState(false);
-  const [enlargedChart, setEnlargedChart] = useState<'pie' | 'line' | 'bar' | null>(null);
+  const [enlargedChart, setEnlargedChart] = useState<'pie' | 'line' | null>(null);
   const [visibleCharts, setVisibleCharts] = useState<{
     pie: boolean;
     line: boolean;
-    bar: boolean;
-  }>({ pie: false, line: false, bar: false });
+  }>({ pie: false, line: false });
   const chartRef = useRef<HTMLDivElement>(null);
   
   // 触屏设备检测和触觉反馈
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { triggerHaptic } = useHapticFeedback();
+  
+  // 设备信息获取函数
+  const getDeviceInfo = () => {
+    const isSmallScreen = window.innerWidth < 640;
+    return { isTouchDevice, isMobile, isSmallScreen };
+  };
+  
+  /**
+   * 自定义饼图标签渲染函数
+   * 显示项目名称、金额和百分比的紧凑布局
+   */
+  const renderCustomizedLabel = useCallback((props: any) => {
+    const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
+    
+    // 显示所有标签，包括小饼块
+    // if (percent < 0.03) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const { isTouchDevice, isMobile, isSmallScreen } = getDeviceInfo();
+    
+    // 标签距离设置
+    const labelDistance = isTouchDevice 
+      ? (isMobile ? 25 : 30) 
+      : (isSmallScreen ? 20 : 25);
+    
+    // 计算标签位置
+    const radius = outerRadius + labelDistance;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    // 文本对齐方式
+    const textAnchor = x > cx ? 'start' : 'end';
+    
+    // 格式化金额
+    const formattedValue = value.toLocaleString('zh-CN');
+    const percentText = `${(percent * 100).toFixed(1)}%`;
+    
+    // 响应式字体大小
+    const fontSize = isTouchDevice ? (isMobile ? 10 : 11) : 10;
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="#374151"
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        fontSize={fontSize}
+        fontWeight="500"
+        className="select-none"
+      >
+        {`${name} ¥${formattedValue} (${percentText})`}
+      </text>
+    );
+  }, []);
   
   const { 
     getChartData, 
@@ -48,23 +102,40 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   
   const availableMonths = getAvailableMonths();
   
-  // 获取图表数据
-  const pieData = selectedMonth ? getMonthlyChartData(selectedMonth) : getChartData(recordId);
+  // 基于微软文档最佳实践的数据处理逻辑
+  const pieData = useMemo(() => {
+    const rawData = selectedMonth ? getMonthlyChartData(selectedMonth) : getChartData(recordId);
+    
+    // 微软文档建议：饼图类别应少于8个，提高可读性
+    if (rawData.length > 7) {
+      const total = rawData.reduce((sum, item) => sum + item.value, 0);
+      // 使用5%阈值，符合微软Power BI最佳实践
+      const threshold = total * 0.05;
+      
+      const significantItems = rawData.filter(item => item.value >= threshold);
+      const minorItems = rawData.filter(item => item.value < threshold);
+      
+      // 将小项目合并为"其他"类别
+      if (minorItems.length > 0) {
+        const otherValue = minorItems.reduce((sum, item) => sum + item.value, 0);
+        significantItems.push({
+          name: '其他',
+          value: otherValue,
+          color: SALARY_COLORS.other
+        });
+      }
+      
+      // 按值降序排列，提升视觉效果
+      return significantItems.sort((a, b) => b.value - a.value);
+    }
+    
+    // 少于8个类别时，直接按值排序
+    return rawData.sort((a, b) => b.value - a.value);
+  }, [selectedMonth, recordId, getMonthlyChartData, getChartData]);
   
   const monthlyStats = (() => {
     if (activeChart === 'line' && startMonth && endMonth) {
       return getFilteredMonthlySalaryStats(startMonth, endMonth);
-    } else if (activeChart === 'bar' && barChartMode === 'range' && startMonth && endMonth) {
-      return getFilteredMonthlySalaryStats(startMonth, endMonth);
-    } else if (activeChart === 'bar' && barChartMode === 'single' && selectedMonth) {
-      const singleMonthData = getMonthlyChartData(selectedMonth);
-      return [{
-        month: selectedMonth,
-        totalSalary: singleMonthData.reduce((sum, item) => sum + item.value, 0),
-        baseSalary: singleMonthData.find(item => item.name === '基础薪资')?.value || 0,
-        overtime: singleMonthData.find(item => item.name === '加班费')?.value || 0,
-        others: singleMonthData.find(item => item.name === '其它加项')?.value || 0
-      }];
     }
     return getMonthlySalaryStats();
   })();
@@ -81,7 +152,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
       filename = `薪资组成分析_${selectedMonth || '全部月份'}.json`;
     } else {
       dataToExport = monthlyStats;
-      filename = `月度薪资统计_${activeChart === 'line' ? '趋势' : '对比'}.json`;
+      filename = `月度薪资统计_趋势.json`;
     }
     
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
@@ -179,7 +250,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   /**
    * 切换图表显示/隐藏状态
    */
-  const toggleChartVisibility = (chartType: 'pie' | 'line' | 'bar') => {
+  const toggleChartVisibility = (chartType: 'pie' | 'line') => {
     // 触屏设备触觉反馈
     if (isTouchDevice) {
       triggerHaptic('light');
@@ -193,7 +264,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   /**
    * 处理图表切换（带触觉反馈）
    */
-  const handleChartChange = (chartType: 'pie' | 'line' | 'bar') => {
+  const handleChartChange = (chartType: 'pie' | 'line') => {
     if (isTouchDevice) {
       triggerHaptic('medium');
     }
@@ -203,221 +274,71 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   /**
    * 处理图表放大（带触觉反馈）
    */
-  const handleChartEnlarge = (chartType: 'pie' | 'line' | 'bar') => {
+  const handleChartEnlarge = (chartType: 'pie' | 'line') => {
     if (isTouchDevice) {
       triggerHaptic('heavy');
     }
     setEnlargedChart(chartType);
   };
 
-  /**
-   * 自定义饼图标签 - 智能标签定位算法，优先保持标签与饼块的自然位置关系
-   */
-  const renderCustomizedLabel = useCallback((props: any, allData: any[]) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percent, name, value, index } = props;
-    const RADIAN = Math.PI / 180;
-    
-    // 如果百分比太小，不显示标签
-    if (percent < 0.03) return null;
-    
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    
-    // 响应式调整 - 针对触屏设备优化
-    const isSmallScreen = window.innerWidth < 640;
-    const containerWidth = isTouchDevice 
-      ? (isMobile ? 300 : 400) 
-      : (isSmallScreen ? 320 : 450);
-    const containerHeight = isTouchDevice 
-      ? (isMobile ? 260 : 320) 
-      : (isSmallScreen ? 280 : 350);
-    
-    // 计算连接线的起点（从饼图边缘开始）
-    const sx = cx + outerRadius * cos;
-    const sy = cy + outerRadius * sin;
-    
-    // 确定标签在左侧还是右侧
-    const isRightSide = cos >= 0;
-    
-    // 标签尺寸 - 触屏设备优化
-    const labelHeight = isTouchDevice 
-      ? (isMobile ? 36 : 40) 
-      : (isSmallScreen ? 32 : 36);
-    const labelWidth = isTouchDevice 
-      ? (isMobile ? 95 : 115) 
-      : (isSmallScreen ? 85 : 105);
-    const minSpacing = isTouchDevice 
-      ? (isMobile ? 10 : 12) 
-      : (isSmallScreen ? 6 : 8);
-    
-    // 计算理想的标签位置（最接近饼块的自然位置）
-    const idealDistance = isSmallScreen ? 60 : 80;
-    const idealX = isRightSide 
-      ? Math.min(cx + outerRadius + idealDistance, containerWidth - labelWidth - 10)
-      : Math.max(cx - outerRadius - idealDistance, labelWidth + 10);
-    const idealY = cy + (outerRadius + idealDistance) * sin;
-    
-    // 获取所有需要显示的标签数据
-    const visibleLabels = allData?.filter((item: any) => item.percent >= 0.03) || [];
-    
-    // 计算当前标签的最终位置
-    let finalX = idealX;
-    let finalY = idealY;
-    
-    // 边界检查和调整
-    const topMargin = 40;
-    const bottomMargin = 40;
-    finalY = Math.max(topMargin + labelHeight/2, Math.min(finalY, containerHeight - bottomMargin - labelHeight/2));
-    
-    // 检测与其他标签的重叠并调整位置
-    const currentLabelIndex = visibleLabels.findIndex(item => 
-      Math.abs(item.midAngle - midAngle) < 0.1 && item.name === name
-    );
-    
-    if (currentLabelIndex >= 0) {
-      // 获取同侧的其他标签
-      const sideLabels = visibleLabels.filter((item: any, idx: number) => {
-        if (idx === currentLabelIndex) return false;
-        const itemCos = Math.cos(-RADIAN * item.midAngle);
-        return isRightSide ? itemCos >= 0 : itemCos < 0;
-      });
-      
-      // 检测重叠并调整
-      for (const otherLabel of sideLabels) {
-        const otherSin = Math.sin(-RADIAN * otherLabel.midAngle);
-        const otherIdealY = cy + (outerRadius + idealDistance) * otherSin;
-        const otherFinalY = Math.max(topMargin + labelHeight/2, 
-          Math.min(otherIdealY, containerHeight - bottomMargin - labelHeight/2));
-        
-        // 检查垂直重叠
-        const verticalDistance = Math.abs(finalY - otherFinalY);
-        if (verticalDistance < labelHeight + minSpacing) {
-          // 发生重叠，需要调整位置
-          const adjustment = (labelHeight + minSpacing - verticalDistance) / 2;
-          
-          // 根据角度关系决定调整方向
-          if (midAngle < otherLabel.midAngle) {
-            // 当前标签角度更小，向上调整
-            finalY = Math.max(topMargin + labelHeight/2, finalY - adjustment);
-          } else {
-            // 当前标签角度更大，向下调整
-            finalY = Math.min(containerHeight - bottomMargin - labelHeight/2, finalY + adjustment);
-          }
-        }
-      }
-    }
-    
-    // 计算连接线路径
-    const midDistance = isSmallScreen ? 20 : 30;
-    const midX = cx + (outerRadius + midDistance) * cos;
-    const midY = cy + (outerRadius + midDistance) * sin;
-    
-    // 水平连接段
-    const horizontalLength = isSmallScreen ? 15 : 25;
-    const hx = isRightSide ? finalX - horizontalLength : finalX + horizontalLength;
-    const hy = finalY;
-    
-    const textAnchor = isRightSide ? 'start' : 'end';
-    const percentText = `${(percent * 100).toFixed(1)}%`;
-    
-    // 响应式字体和尺寸 - 触屏设备优化
-    const fontSize = isTouchDevice 
-      ? (isMobile ? 13 : 15) 
-      : (isSmallScreen ? 11 : 13);
-    const percentFontSize = isTouchDevice 
-      ? (isMobile ? 12 : 14) 
-      : (isSmallScreen ? 10 : 12);
-    const bgWidth = isTouchDevice 
-      ? (isMobile ? 95 : 115) 
-      : (isSmallScreen ? 85 : 105);
-    const bgHeight = isTouchDevice 
-      ? (isMobile ? 36 : 40) 
-      : (isSmallScreen ? 28 : 32);
-    
-    return (
-      <g 
-        key={`label-${name}-${index}`}
-        style={{
-          transform: 'translateZ(0)', // 启用硬件加速
-          transformOrigin: `${finalX}px ${finalY}px`, // 设置变换原点为标签位置
-        }}
-      >
-        {/* 优化的三段式连接线 */}
-        <path
-          d={`M${sx},${sy}L${midX},${midY}L${hx},${hy}L${isRightSide ? finalX - 5 : finalX + 5},${hy}`}
-          stroke="#94a3b8"
-          strokeWidth={isSmallScreen ? 1.5 : 2}
-          fill="none"
-          strokeDasharray="2,2"
-          opacity={0.7}
-          style={{
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
-        {/* 标签背景 */}
-        <rect
-          x={isRightSide ? finalX - 8 : finalX - bgWidth + 8}
-          y={finalY - bgHeight/2}
-          width={bgWidth}
-          height={bgHeight}
-          fill="rgba(255, 255, 255, 0.96)"
-          stroke="#cbd5e1"
-          strokeWidth={1}
-          rx={isSmallScreen ? 8 : 10}
-          filter="drop-shadow(0 2px 8px rgba(0,0,0,0.12))"
-          style={{
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transformOrigin: 'center',
-          }}
-        />
-        {/* 标签文本 */}
-        <text
-          x={isRightSide ? finalX : finalX - 8}
-          y={finalY - (isSmallScreen ? 5 : 6)}
-          textAnchor={textAnchor}
-          dominantBaseline="middle"
-          fontSize={fontSize}
-          fontWeight={600}
-          fill="#1f2937"
-          style={{
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transformOrigin: 'center',
-          }}
-        >
-          {name}
-        </text>
-        <text
-          x={isRightSide ? finalX : finalX - 8}
-          y={finalY + (isSmallScreen ? 7 : 8)}
-          textAnchor={textAnchor}
-          dominantBaseline="middle"
-          fontSize={percentFontSize}
-          fontWeight={500}
-          fill="#6b7280"
-          style={{
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            transformOrigin: 'center',
-          }}
-        >
-          {percentText}
-        </text>
-      </g>
-    );
-  }, []);
+  // 基于微软文档最佳实践的颜色配置
+   // 使用语义化颜色，确保可访问性和视觉层次
+   const SALARY_COLORS = {
+     baseSalary: '#8b5cf6',           // 紫色 - 基本薪资
+     professionalAllowance: '#a78bfa', // 浅紫色 - 专业加给
+     mealAllowance: '#c4b5fd',        // 更浅紫色 - 餐补
+     nightShiftAllowance: '#ddd6fe',  // 极浅紫色 - 夜班津贴
+     cleanRoomAllowance: '#ede9fe',   // 最浅紫色 - 无尘衣津贴
+     customItems: '#f3e8ff',          // 淡紫色 - 其它加项
+     overtime1: '#10b981',            // 绿色 - 加班1
+     overtime2: '#34d399',            // 浅绿色 - 加班2
+     overtime3: '#6ee7b7',            // 更浅绿色 - 加班3
+     other: '#94a3b8'                 // 灰色 - 其他项目
+   };
+
+
 
   /**
-   * 自定义工具提示
+   * 基于微软文档最佳实践的增强型工具提示
+   * 提供更丰富的数据展示和更好的可访问性
    */
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const total = pieData.reduce((sum, item) => sum + item.value, 0);
+      
       return (
-        <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-200">
-          <p className="font-semibold text-slate-900 mb-1">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
-              {entry.name}: ¥{entry.value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+        <div className="bg-white p-4 rounded-xl shadow-xl border border-slate-200 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <p className="font-semibold text-slate-900">{label || '薪资构成'}</p>
+          </div>
+          <div className="space-y-2">
+            {payload.map((entry: any, index: number) => {
+              const percentage = ((entry.value / total) * 100).toFixed(1);
+              return (
+                <div key={index} className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-sm font-medium text-slate-700">{entry.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-slate-900">
+                      ¥{entry.value.toLocaleString('zh-CN')}
+                    </p>
+                    <p className="text-xs text-slate-500">{percentage}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 pt-2 border-t border-slate-100">
+            <p className="text-xs text-slate-500">
+              总计: ¥{total.toLocaleString('zh-CN')}
             </p>
-          ))}
+          </div>
         </div>
       );
     }
@@ -425,18 +346,48 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   };
 
   /**
-   * 月度统计工具提示
+   * 月度统计增强型工具提示
+   * 与饼图工具提示保持一致的设计风格
    */
   const MonthlyTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+      
       return (
-        <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-200">
-          <p className="font-semibold text-slate-900 mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
-              {entry.name}: ¥{entry.value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
-            </p>
-          ))}
+        <div className="bg-white p-4 rounded-xl shadow-xl border border-slate-200 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <p className="font-semibold text-slate-900">{label}</p>
+          </div>
+          <div className="space-y-2">
+            {payload.map((entry: any, index: number) => {
+              const percentage = total > 0 ? ((entry.value / total) * 100).toFixed(1) : '0.0';
+              return (
+                <div key={index} className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: entry.color }}
+                    />
+                    <span className="text-sm font-medium text-slate-700">{entry.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-slate-900">
+                      ¥{entry.value.toLocaleString('zh-CN')}
+                    </p>
+                    <p className="text-xs text-slate-500">{percentage}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {total > 0 && (
+            <div className="mt-3 pt-2 border-t border-slate-100">
+              <p className="text-xs text-slate-500">
+                月度总计: ¥{total.toLocaleString('zh-CN')}
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -501,25 +452,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
             )}>折线图 {!visibleCharts.line && '(隐藏)'}</span>
             {!isTouchDevice && <span className="sm:hidden">折线图</span>}
           </ClayButton>
-          <ClayButton
-            variant={visibleCharts.bar ? 'primary' : 'secondary'}
-            size={isTouchDevice ? "md" : "sm"}
-            onClick={() => toggleChartVisibility('bar')}
-            className={cn(
-              "flex items-center justify-center gap-1 sm:gap-2",
-              isTouchDevice ? "text-base px-6 py-3" : "text-xs sm:text-sm",
-              !visibleCharts.bar && "opacity-50"
-            )}
-            hapticFeedback
-          >
-            <BarChart3 className={cn(
-              isTouchDevice ? "w-5 h-5" : "w-3 h-3 sm:w-4 sm:h-4"
-            )} />
-            <span className={cn(
-              isTouchDevice ? "inline" : "hidden sm:inline"
-            )}>柱状图 {!visibleCharts.bar && '(隐藏)'}</span>
-            {!isTouchDevice && <span className="sm:hidden">柱状图</span>}
-          </ClayButton>
+          {/* 柱状图按钮已完全移除 */}
         </div>
       </div>
 
@@ -589,27 +522,53 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                   )}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart margin={{ 
-                        top: isTouchDevice ? 15 : 10, 
-                        right: isTouchDevice ? 30 : 20, 
-                        bottom: isTouchDevice ? 15 : 10, 
-                        left: isTouchDevice ? 30 : 20 
+                        top: isTouchDevice ? 80 : 70, 
+                        right: isTouchDevice ? 120 : 100, 
+                        bottom: isTouchDevice ? 80 : 70, 
+                        left: isTouchDevice ? 120 : 100 
                       }}>
                         <Pie
                           data={pieData}
                           cx="50%"
                           cy="50%"
-                          labelLine={false}
-                          label={(props) => renderCustomizedLabel(props, pieData)}
-                          outerRadius={isTouchDevice ? (isMobile ? 70 : 90) : 80}
+                          labelLine={{
+                            stroke: '#94a3b8',
+                            strokeWidth: 1.5,
+                            strokeDasharray: '3,3'
+                          }}
+                          label={renderCustomizedLabel}
+                          outerRadius={isTouchDevice ? (isMobile ? 50 : 60) : (window.innerWidth < 640 ? 55 : 65)}
+                          innerRadius={0}
                           fill="#8884d8"
                           dataKey="value"
                           className="drop-shadow-lg"
+                          animationBegin={0}
+                          animationDuration={1200}
+                          animationEasing="ease-out"
+                          stroke="#ffffff"
+                          strokeWidth={2}
                         >
                           {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={entry.color}
+                              style={{
+                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                                transition: 'all 0.3s ease'
+                              }}
+                            />
                           ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip 
+                           content={<CustomTooltip />}
+                           cursor={{ fill: 'rgba(255,255,255,0.1)' }}
+                           animationDuration={200}
+                           wrapperStyle={{
+                             outline: 'none',
+                             zIndex: 1000
+                           }}
+                         />
+                         {/* 图例已移除 */}
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -735,177 +694,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
           </ClayCard>
       )}
 
-      {/* 柱状图 - 月度薪资对比或单月占比 */}
-        {visibleCharts.bar && (
-          <ClayCard variant="pink">
-            <ClayCardTitle className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-base sm:text-lg font-semibold">{barChartMode === 'single' ? '单月薪资占比' : '月度薪资对比'}</span>
-                <ClayButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setActiveChart('bar');
-                    setShowExportDialog(true);
-                  }}
-                  className="flex items-center justify-center gap-1 text-xs sm:text-sm px-2 sm:px-3"
-                >
-                  <Image className="w-3 h-3" />
-                  <span className="hidden sm:inline">导出</span>
-                </ClayButton>
-              </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="flex flex-wrap gap-2">
-                    <ClayButton
-                      variant={barChartMode === 'range' ? 'primary' : 'secondary'}
-                      size="sm"
-                      onClick={() => setBarChartMode('range')}
-                      className="text-xs sm:text-sm"
-                    >
-                      时间范围
-                    </ClayButton>
-                    <ClayButton
-                      variant={barChartMode === 'single' ? 'primary' : 'secondary'}
-                      size="sm"
-                      onClick={() => setBarChartMode('single')}
-                      className="text-xs sm:text-sm"
-                    >
-                      单月占比
-                    </ClayButton>
-                  </div>
-                  
-                  {barChartMode === 'range' && (
-                    <div className="flex items-center gap-2">
-                      <MonthSelector
-                        value={startMonth}
-                        onChange={setStartMonth}
-                        availableMonths={availableMonths}
-                        placeholder="开始月份"
-                        className="text-xs sm:text-sm flex-1 sm:flex-none"
-                      />
-                      <span className="text-xs sm:text-sm text-gray-500">至</span>
-                      <MonthSelector
-                        value={endMonth}
-                        onChange={setEndMonth}
-                        availableMonths={availableMonths}
-                        placeholder="结束月份"
-                        className="text-xs sm:text-sm flex-1 sm:flex-none"
-                      />
-                    </div>
-                  )}
-                  
-                  {barChartMode === 'single' && (
-                    <MonthSelector
-                      value={selectedMonth}
-                      onChange={setSelectedMonth}
-                      availableMonths={availableMonths}
-                      placeholder="选择月份"
-                      className="text-xs sm:text-sm"
-                    />
-                  )}
-                </div>
-              </div>
-            </ClayCardTitle>
-            <ClayCardContent>
-              {monthlyStats.length > 0 ? (
-                <div 
-                  ref={activeChart === 'bar' ? chartRef : undefined}
-                  onDoubleClick={() => setEnlargedChart('bar')}
-                  className="cursor-pointer"
-                  title="双击放大查看"
-                >
-                  <div className="h-64 sm:h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      {barChartMode === 'single' && monthlyStats.length === 1 ? (
-                        // 单月占比 - 使用饼图数据格式
-                        <BarChart data={pieData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                          <XAxis 
-                            dataKey="name" 
-                            stroke="#374151"
-                            fontSize={window.innerWidth < 640 ? 10 : 12}
-                            tick={{ fill: '#374151', fontWeight: 500 }}
-                            angle={window.innerWidth < 640 ? -45 : 0}
-                            textAnchor={window.innerWidth < 640 ? 'end' : 'middle'}
-                            height={window.innerWidth < 640 ? 60 : 30}
-                          />
-                          <YAxis 
-                            stroke="#374151"
-                            fontSize={window.innerWidth < 640 ? 10 : 12}
-                            tick={{ fill: '#374151', fontWeight: 500 }}
-                            tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
-                            width={window.innerWidth < 640 ? 50 : 60}
-                          />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Bar 
-                            dataKey="value" 
-                            fill="#8b5cf6"
-                            radius={[4, 4, 0, 0]}
-                            maxBarSize={window.innerWidth < 640 ? 30 : 40}
-                          >
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      ) : (
-                        // 时间范围对比
-                        <BarChart data={monthlyStats}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                          <XAxis 
-                            dataKey="month" 
-                            stroke="#374151"
-                            fontSize={window.innerWidth < 640 ? 10 : 12}
-                            tick={{ fill: '#374151', fontWeight: 500 }}
-                            angle={window.innerWidth < 640 ? -45 : 0}
-                            textAnchor={window.innerWidth < 640 ? 'end' : 'middle'}
-                            height={window.innerWidth < 640 ? 60 : 30}
-                          />
-                          <YAxis 
-                            stroke="#374151"
-                            fontSize={window.innerWidth < 640 ? 10 : 12}
-                            tick={{ fill: '#374151', fontWeight: 500 }}
-                            tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
-                            width={window.innerWidth < 640 ? 50 : 60}
-                          />
-                          <Tooltip content={<MonthlyTooltip />} />
-                          <Bar 
-                            dataKey="baseSalaryTotal" 
-                            stackId="a" 
-                            fill="#8b5cf6" 
-                            name="基础薪资"
-                            radius={[0, 0, 4, 4]}
-                            maxBarSize={window.innerWidth < 640 ? 30 : 40}
-                          />
-                          <Bar 
-                            dataKey="customItemsTotal" 
-                            stackId="a" 
-                            fill="#ec4899" 
-                            name="其它加项"
-                            maxBarSize={window.innerWidth < 640 ? 30 : 40}
-                          />
-                          <Bar 
-                            dataKey="overtimeTotal" 
-                            stackId="a" 
-                            fill="#10b981" 
-                            name="加班费"
-                            radius={[4, 4, 0, 0]}
-                            maxBarSize={window.innerWidth < 640 ? 30 : 40}
-                          />
-                        </BarChart>
-                      )}
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  暂无数据可显示图表
-                </div>
-              )}
-            </ClayCardContent>
-          </ClayCard>
-       )}
+      {/* 柱状图功能已移除 */}
       
       {/* 导出对话框 */}
       {showExportDialog && (
@@ -1017,14 +806,18 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
               <div className="h-96 lg:h-[500px]">
                 {enlargedChart === 'pie' && (
                    <ResponsiveContainer width="100%" height="100%">
-                     <PieChart margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                     <PieChart margin={{ top: 70, right: 100, bottom: 70, left: 100 }}>
                        <Pie
                          data={pieData}
                          cx="50%"
                          cy="50%"
-                         labelLine={false}
-                         label={(props) => renderCustomizedLabel(props, pieData)}
-                         outerRadius={120}
+                         labelLine={{
+                           stroke: '#94a3b8',
+                           strokeWidth: 1.5,
+                           strokeDasharray: '3,3'
+                         }}
+                         label={renderCustomizedLabel}
+                         outerRadius={80}
                          fill="#8884d8"
                          dataKey="value"
                          className="drop-shadow-lg"
@@ -1082,78 +875,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                      </LineChart>
                    </ResponsiveContainer>
                  )}
-                 {enlargedChart === 'bar' && (
-                   <ResponsiveContainer width="100%" height="100%">
-                     {barChartMode === 'single' && monthlyStats.length === 1 ? (
-                       <BarChart data={pieData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                         <XAxis 
-                           dataKey="name" 
-                           stroke="#374151"
-                           fontSize={14}
-                           tick={{ fill: '#374151', fontWeight: 500 }}
-                         />
-                         <YAxis 
-                           stroke="#374151"
-                           fontSize={14}
-                           tick={{ fill: '#374151', fontWeight: 500 }}
-                           tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
-                         />
-                         <Tooltip content={<CustomTooltip />} />
-                         <Bar 
-                           dataKey="value" 
-                           fill="#8b5cf6"
-                           radius={[6, 6, 0, 0]}
-                           maxBarSize={60}
-                         >
-                           {pieData.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={entry.color} />
-                           ))}
-                         </Bar>
-                       </BarChart>
-                     ) : (
-                       <BarChart data={monthlyStats} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                         <XAxis 
-                           dataKey="month" 
-                           stroke="#374151"
-                           fontSize={14}
-                           tick={{ fill: '#374151', fontWeight: 500 }}
-                         />
-                         <YAxis 
-                           stroke="#374151"
-                           fontSize={14}
-                           tick={{ fill: '#374151', fontWeight: 500 }}
-                           tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
-                         />
-                         <Tooltip content={<MonthlyTooltip />} />
-                         <Bar 
-                           dataKey="baseSalaryTotal" 
-                           stackId="a" 
-                           fill="#8b5cf6" 
-                           name="基础薪资"
-                           radius={[0, 0, 6, 6]}
-                           maxBarSize={60}
-                         />
-                         <Bar 
-                           dataKey="customItemsTotal" 
-                           stackId="a" 
-                           fill="#ec4899" 
-                           name="其它加项"
-                           maxBarSize={60}
-                         />
-                         <Bar 
-                           dataKey="overtimeTotal" 
-                           stackId="a" 
-                           fill="#10b981" 
-                           name="加班费"
-                           radius={[6, 6, 0, 0]}
-                           maxBarSize={60}
-                         />
-                       </BarChart>
-                     )}
-                   </ResponsiveContainer>
-                 )}
+                 {/* 放大版柱状图功能已移除 */}
               </div>
             </div>
           </div>
