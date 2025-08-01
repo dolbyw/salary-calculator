@@ -1,57 +1,143 @@
-# React + TypeScript + Vite
+# 薪资计算器 💰
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个现代化的薪资计算PWA应用，专为移动端优化，支持离线使用。
 
-Currently, two official plugins are available:
+## ✨ 主要功能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 📊 薪资计算
+- **基础薪资管理**：本薪、专业加给、餐补、夜班津贴、无尘衣津贴
+- **加班费计算**：支持三种不同费率的加班时数计算
+- **自定义项目**：灵活添加其他收入项目
+- **实时计算**：输入数据后立即显示总薪资
 
-## Expanding the ESLint configuration
+### 📈 数据可视化
+- **趋势图表**：薪资变化趋势一目了然
+- **分类统计**：基础薪资与加班费分别统计
+- **数据导出**：支持导出图表为图片格式
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📱 移动端优化
+- **响应式设计**：完美适配各种屏幕尺寸
+- **触摸友好**：针对触摸设备优化的交互体验
+- **PWA支持**：可安装到桌面，支持离线使用
+- **自定义弹窗**：替换原生弹窗，提供更好的移动端体验
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### 🎨 用户体验
+- **深色/浅色主题**：支持主题切换
+- **数据持久化**：本地存储，数据不丢失
+- **历史记录**：查看和管理历史计算记录
+- **数据导入导出**：支持备份和恢复数据
+
+## 🚀 技术栈
+
+- **前端框架**：React 18 + TypeScript
+- **构建工具**：Vite
+- **样式框架**：Tailwind CSS
+- **状态管理**：Zustand
+- **图表库**：Recharts
+- **PWA**：Vite PWA Plugin
+- **UI组件**：自定义组件库
+
+## 📦 安装和运行
+
+### 环境要求
+- Node.js 16+
+- npm 或 yarn
+
+### 本地开发
+
+```bash
+# 克隆项目
+git clone https://github.com/dolbyw/salary-calculator.git
+
+# 进入项目目录
+cd salary-calculator
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 构建部署
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# 构建生产版本
+npm run build
 
-export default tseslint.config({
-  extends: [
-    // other configs...
-    // Enable lint rules for React
-    reactX.configs['recommended-typescript'],
-    // Enable lint rules for React DOM
-    reactDom.configs.recommended,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+# 预览构建结果
+npm run preview
 ```
+
+## 🌟 特色功能
+
+### PWA 支持
+- 📱 可安装到手机桌面
+- 🔄 支持离线使用
+- 🚀 快速启动和加载
+- 📊 后台数据同步
+
+### 移动端优化
+- 👆 触摸友好的界面设计
+- 📐 响应式布局适配
+- 🎯 大按钮和易点击区域
+- 💬 自定义确认对话框
+
+### 数据管理
+- 💾 本地数据存储
+- 📤 数据导入导出
+- 🗂️ 历史记录管理
+- 🔄 数据备份恢复
+
+## 📱 使用指南
+
+1. **输入基础薪资**：在薪资计算页面输入各项基础薪资
+2. **设置加班时数**：输入不同费率的加班时间
+3. **查看计算结果**：实时显示总薪资金额
+4. **保存记录**：点击保存按钮将计算结果存入历史
+5. **查看图表**：在历史页面查看薪资趋势图表
+6. **管理数据**：在设置页面进行数据导入导出
+
+## 🔧 开发说明
+
+### 项目结构
+```
+src/
+├── components/          # React 组件
+│   ├── ui/             # 基础 UI 组件
+│   ├── SalaryCalculator.tsx
+│   ├── SalaryHistory.tsx
+│   └── SalarySettings.tsx
+├── hooks/              # 自定义 Hooks
+├── store/              # 状态管理
+├── types/              # TypeScript 类型定义
+└── lib/                # 工具函数
+```
+
+### 代码规范
+- 使用 TypeScript 进行类型检查
+- 遵循 ESLint 代码规范
+- 组件采用函数式编程
+- 使用 React Hooks 管理状态
+
+## 🤝 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 🙏 致谢
+
+感谢所有为这个项目做出贡献的开发者！
+
+---
+
+**薪资计算器** - 让薪资计算变得简单高效 ✨
