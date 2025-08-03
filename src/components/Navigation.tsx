@@ -30,10 +30,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { isDark, colors } = useTheme();
 
-  // 在触屏设备上不显示悬浮导航栏
-  if (isTouchDevice) {
-    return null;
-  }
+  // 在触屏设备上不显示悬浮导航栏 - 但保持所有hooks调用
+  const shouldRender = !isTouchDevice;
 
   /**
    * 防抖函数 - 避免频繁的状态切换
@@ -255,6 +253,10 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
       return `${colors.navigation.inactiveItem} ${colors.navigation.hoverItem}`;
     };
   }, [currentPage, colors.navigation.activeItem, colors.navigation.inactiveItem, colors.navigation.hoverItem]);
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <nav 

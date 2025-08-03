@@ -1,14 +1,29 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayButton } from './ui/ClayButton';
 import { MonthSelector } from './ui/MonthSelector';
 import { useSalaryStore, calculateSalaryDetails } from '../store/salaryStore';
 import { useTouchDevice, useHapticFeedback } from '../hooks/useTouchDevice';
+import { useTheme } from '../hooks/useTheme';
 import { PieChart as PieChartIcon, TrendingUp, Download, Image } from 'lucide-react';
 import { ChartData, MonthlySalaryStats } from '../types/salary';
-import { cn, formatAmount, formatDate } from '../lib/utils';
+import { cn } from '../lib/utils';
 import html2canvas from 'html2canvas';
+
+// Color palette for salary chart segments
+const SALARY_COLORS = {
+  baseSalary: '#8b5cf6',           // purple - base salary
+  professionalAllowance: '#a78bfa', // light purple - professional allowance
+  mealAllowance: '#c4b5fd',        // lighter purple - meal allowance
+  nightShiftAllowance: '#ddd6fe',  // very light purple - night shift allowance
+  cleanRoomAllowance: '#ede9fe',   // palest purple - clean room allowance
+  customItems: '#f3e8ff',          // faint purple - other additions
+  overtime1: '#10b981',            // green - overtime 1
+  overtime2: '#34d399',            // light green - overtime 2
+  overtime3: '#6ee7b7',            // lighter green - overtime 3
+  other: '#94a3b8'                 // gray - other items
+};
 
 interface SalaryChartsProps {
   recordId?: string;
@@ -35,6 +50,9 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   // 触屏设备检测和触觉反馈
   const { isTouchDevice, isMobile } = useTouchDevice();
   const { triggerHaptic } = useHapticFeedback();
+  
+  // 主题相关
+  const { colors, isDark } = useTheme();
   
   // 设备信息获取函数
   const getDeviceInfo = () => {
@@ -75,11 +93,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
     // 响应式字体大小
     const fontSize = isTouchDevice ? (isMobile ? 10 : 11) : 10;
     
+    // 根据主题动态设置标签颜色
+    const labelColor = isDark ? '#e2e8f0' : '#374151'; // 黑夜模式使用浅色，白天模式使用深色
+    
     return (
       <text 
         x={x} 
         y={y} 
-        fill="#374151"
+        fill={labelColor}
         textAnchor={textAnchor}
         dominantBaseline="central"
         fontSize={fontSize}
@@ -89,7 +110,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
         {`${name} ¥${formattedValue} (${percentText})`}
       </text>
     );
-  }, []);
+  }, [isDark]);
   
   const { 
     getChartData, 
@@ -101,6 +122,15 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
   } = useSalaryStore();
   
   const availableMonths = getAvailableMonths();
+
+  // 初始化折线图月份选择器默认值：默认从最早月份到最近月份
+  useEffect(() => {
+    if (!startMonth && !endMonth && availableMonths.length > 0) {
+      // availableMonths 通常按降序排列（最新在前），因此最早月份位于数组末尾
+      setStartMonth(availableMonths[availableMonths.length - 1]);
+      setEndMonth(availableMonths[0]);
+    }
+  }, [availableMonths, startMonth, endMonth]);
   
   // 基于微软文档最佳实践的数据处理逻辑
   const pieData = useMemo(() => {
@@ -144,8 +174,8 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
    * 导出图表数据
    */
   const exportChartData = () => {
-    let dataToExport;
-    let filename;
+    let dataToExport: any[];
+    let filename: string;
     
     if (activeChart === 'pie') {
       dataToExport = pieData;
@@ -283,18 +313,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
 
   // 基于微软文档最佳实践的颜色配置
    // 使用语义化颜色，确保可访问性和视觉层次
-   const SALARY_COLORS = {
-     baseSalary: '#8b5cf6',           // 紫色 - 基本薪资
-     professionalAllowance: '#a78bfa', // 浅紫色 - 专业加给
-     mealAllowance: '#c4b5fd',        // 更浅紫色 - 餐补
-     nightShiftAllowance: '#ddd6fe',  // 极浅紫色 - 夜班津贴
-     cleanRoomAllowance: '#ede9fe',   // 最浅紫色 - 无尘衣津贴
-     customItems: '#f3e8ff',          // 淡紫色 - 其它加项
-     overtime1: '#10b981',            // 绿色 - 加班1
-     overtime2: '#34d399',            // 浅绿色 - 加班2
-     overtime3: '#6ee7b7',            // 更浅绿色 - 加班3
-     other: '#94a3b8'                 // 灰色 - 其他项目
-   };
+
 
 
 
@@ -520,7 +539,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                       ? "h-80 lg:h-96" 
                       : "h-64 sm:h-80 lg:h-96"
                   )}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" margin={{ top: 40, right: 30, bottom: 20, left: 20 }}>
                       <PieChart margin={{ 
                         top: isTouchDevice ? 80 : 70, 
                         right: isTouchDevice ? 120 : 100, 
@@ -637,25 +656,25 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                 >
                   <div className="h-64 sm:h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyStats}>
+                      <LineChart data={monthlyStats} margin={{ top: 50, right: 50, bottom: 20, left: 30 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                         <XAxis 
                           dataKey="month" 
-                          stroke="#374151"
+                          stroke="#ffffff"
                           fontSize={window.innerWidth < 640 ? 10 : 12}
-                          tick={{ fill: '#374151', fontWeight: 500 }}
+                          tick={{ fill: '#ffffff', fontWeight: 500 }}
                           angle={window.innerWidth < 640 ? -45 : 0}
                           textAnchor={window.innerWidth < 640 ? 'end' : 'middle'}
                           height={window.innerWidth < 640 ? 60 : 30}
                         />
                         <YAxis 
-                          stroke="#374151"
+                          stroke="#ffffff"
                           fontSize={window.innerWidth < 640 ? 10 : 12}
-                          tick={{ fill: '#374151', fontWeight: 500 }}
+                          tick={{ fill: '#ffffff', fontWeight: 500 }}
                           tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
                           width={window.innerWidth < 640 ? 50 : 60}
                         />
-                        <Tooltip content={<MonthlyTooltip />} />
+                        {/* 移除悬停提示框 */}
                         <Line 
                           type="monotone" 
                           dataKey="totalSalary" 
@@ -664,6 +683,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                           dot={{ fill: '#10b981', strokeWidth: 2, r: 6 }}
                           activeDot={{ r: 8, stroke: '#10b981', strokeWidth: 2, fill: '#fff' }}
                           name="总薪资"
+                          label={{ 
+                            position: 'top', 
+                            fill: '#10b981', 
+                            fontSize: window.innerWidth < 640 ? 9 : 11,
+                            fontWeight: 500,
+                            offset: 8,
+                            formatter: (value: number) => `¥${value.toLocaleString('zh-CN')}`
+                          }}
                         />
                         <Line 
                           type="monotone" 
@@ -672,6 +699,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                           strokeWidth={2}
                           dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
                           name="基础薪资"
+                          label={{ 
+                            position: 'top', 
+                            fill: '#8b5cf6', 
+                            fontSize: window.innerWidth < 640 ? 9 : 11,
+                            fontWeight: 500,
+                            offset: 8,
+                            formatter: (value: number) => `¥${value.toLocaleString('zh-CN')}`
+                          }}
                         />
                         <Line 
                           type="monotone" 
@@ -680,6 +715,14 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                           strokeWidth={2}
                           dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
                           name="加班费"
+                          label={{ 
+                            position: 'top', 
+                            fill: '#f59e0b', 
+                            fontSize: window.innerWidth < 640 ? 9 : 11,
+                            fontWeight: 500,
+                            offset: 8,
+                            formatter: (value: number) => `¥${value.toLocaleString('zh-CN')}`
+                          }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -831,18 +874,18 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                  )}
                  {enlargedChart === 'line' && (
                    <ResponsiveContainer width="100%" height="100%">
-                     <LineChart data={monthlyStats} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                     <LineChart data={monthlyStats} margin={{ top: 50, right: 50, bottom: 20, left: 30 }}>
                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                        <XAxis 
                          dataKey="month" 
-                         stroke="#374151"
+                         stroke="#ffffff"
                          fontSize={14}
-                         tick={{ fill: '#374151', fontWeight: 500 }}
+                         tick={{ fill: '#ffffff', fontWeight: 500 }}
                        />
                        <YAxis 
-                         stroke="#374151"
+                         stroke="#ffffff"
                          fontSize={14}
-                         tick={{ fill: '#374151', fontWeight: 500 }}
+                         tick={{ fill: '#ffffff', fontWeight: 500 }}
                          tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
                        />
                        <Tooltip content={<MonthlyTooltip />} />

@@ -1,12 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { ClayCard, ClayCardTitle, ClayCardContent } from './ui/ClayCard';
 import { ClayButton } from './ui/ClayButton';
-import { ConfirmDialog } from './ui/ConfirmDialog';
 import { useSalaryStore } from '../store/salaryStore';
 import { SalaryCharts } from './SalaryCharts';
 import { useTheme } from '../hooks/useTheme';
-import { useConfirmDialog } from '../hooks/useConfirmDialog';
-import { cn, formatAmount, formatDate } from '../lib/utils';
+import { cn } from '../lib/utils';
 import { History, Trash2, Calendar, DollarSign, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { SalaryRecord } from '../types/salary';
@@ -14,50 +12,62 @@ import { SalaryRecord } from '../types/salary';
 /**
  * 历史记录页面组件
  */
-export const SalaryHistory: React.FC = React.memo(() => {
+export const SalaryHistory: React.FC = () => {
   const { records, deleteRecord, clearAllRecords } = useSalaryStore();
   const { isDark, colors } = useTheme();
-  const { showConfirm, dialogState, closeDialog } = useConfirmDialog();
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(true);
 
   /**
-   * 删除单条记录 - 使用useCallback优化
+   * 删除单条记录
    */
-  const handleDeleteRecord = useCallback((id: string) => {
+  const handleDeleteRecord = (id: string) => {
     deleteRecord(id);
     toast.success('记录已删除');
-  }, [deleteRecord]);
+  };
 
   /**
-   * 清空所有记录 - 使用useCallback优化
+   * 清空所有记录
    */
-  const handleClearAll = useCallback(async () => {
+  const handleClearAll = () => {
     if (records.length === 0) {
       toast.error('没有记录可清空');
       return;
     }
     
-    const confirmed = await showConfirm({
-      title: '清空所有记录',
-      message: '确定要清空所有记录吗？此操作不可撤销。',
-      confirmText: '清空',
-      cancelText: '取消',
-      variant: 'danger'
-    });
-    
-    if (confirmed) {
+    if (window.confirm('确定要清空所有记录吗？此操作不可撤销。')) {
       clearAllRecords();
       toast.success('所有记录已清空');
     }
-  }, [records.length, clearAllRecords, showConfirm]);
+  };
 
   /**
-   * 切换记录详情显示 - 使用useCallback优化
+   * 切换记录详情显示
    */
-  const toggleRecordDetails = useCallback((id: string) => {
+  const toggleRecordDetails = (id: string) => {
     setExpandedRecord(expandedRecord === id ? null : id);
-  }, [expandedRecord]);
+  };
+
+  /**
+   * 格式化金额显示
+   */
+  const formatAmount = (amount: number): string => {
+    return amount.toLocaleString('zh-CN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  /**
+   * 格式化日期显示
+   */
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+    });
+  };
 
   /**
    * 计算记录的详细信息
@@ -86,12 +96,14 @@ export const SalaryHistory: React.FC = React.memo(() => {
 
   return (
     <div className="space-y-2 px-1">
+
+
       {/* 图表区域 */}
-      {showCharts && records.length > 0 && (
-        <div className="mb-3">
-          <SalaryCharts />
-        </div>
-      )}
+       {showCharts && records.length > 0 && (
+         <div className="mb-3">
+           <SalaryCharts />
+         </div>
+       )}
 
       {/* 操作按钮 */}
       <div className="flex justify-between items-center">
@@ -172,7 +184,7 @@ export const SalaryHistory: React.FC = React.memo(() => {
                         {record.note}
                       </div>
                     )}
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <ClayButton
                         variant="secondary"
                         size="sm"
@@ -373,18 +385,6 @@ export const SalaryHistory: React.FC = React.memo(() => {
           })}
         </div>
       )}
-      
-      {/* 确认对话框 */}
-      <ConfirmDialog 
-        isOpen={dialogState.isOpen}
-        title={dialogState.title}
-        message={dialogState.message}
-        confirmText={dialogState.confirmText}
-        cancelText={dialogState.cancelText}
-        variant={dialogState.variant}
-        onConfirm={dialogState.onConfirm}
-        onClose={dialogState.onCancel || closeDialog}
-      />
     </div>
   );
-});
+};

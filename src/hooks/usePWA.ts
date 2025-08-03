@@ -178,12 +178,7 @@ export const usePWA = () => {
     
     // 监听显示模式变化
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleDisplayModeChange);
-    } else {
-      // 兼容旧版浏览器
-      mediaQuery.addListener(handleDisplayModeChange);
-    }
+    mediaQuery.addEventListener('change', handleDisplayModeChange);
     
     // 延迟初始检查，确保页面完全加载
     const initialCheckTimeout = setTimeout(() => {
@@ -216,11 +211,7 @@ export const usePWA = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', handleDisplayModeChange);
-      } else {
-        mediaQuery.removeListener(handleDisplayModeChange);
-      }
+      mediaQuery.removeEventListener('change', handleDisplayModeChange);
       
       clearTimeout(initialCheckTimeout);
       

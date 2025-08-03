@@ -568,11 +568,11 @@ export const SalaryCalculator: React.FC = React.memo(() => {
       )}
 
       {/* 月份选择对话框 */}
-       <MonthPickerDialog
-         isOpen={showMonthPicker}
-         onConfirm={handleMonthPickerConfirm}
-         onClose={handleMonthPickerCancel}
-       />
+      <MonthPickerDialog
+        isOpen={showMonthPicker}
+        onConfirm={handleMonthPickerConfirm}
+        onClose={handleMonthPickerCancel}
+      />
     </div>
   );
 });

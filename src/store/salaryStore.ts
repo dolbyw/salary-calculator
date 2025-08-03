@@ -89,7 +89,7 @@ export const calculateSalaryDetails = (
  * 生成唯一ID
  */
 const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
 
@@ -358,13 +358,6 @@ export const useSalaryStore = create<SalaryState>()(
 
           const headers = parseCSVLine(lines[0]);
           const dataLines = lines.slice(1);
-          
-          // 验证标题格式
-          const expectedHeaders = [
-            '日期', '年份', '月份', '本薪', '专业加给', '餐补', '夜班津贴', '无尘衣津贴', '自定义项目',
-            '加班1时长', '加班1费率', '加班2时长', '加班2费率', '加班3时长', '加班3费率',
-            '总薪资', '备注'
-          ];
           
           if (headers.length < 14) {
             return { success: false, message: 'CSV文件格式不正确，缺少必要的列' };

@@ -35,7 +35,7 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
   const getVariantStyles = () => {
     const baseStyles = cn(
       'relative w-full rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 appearance-none cursor-pointer',
-      isTouchDevice ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'
+      isTouchDevice ? 'px-3 py-2 text-sm' : 'px-3 py-2 text-sm'
     );
     
     switch (variant) {
@@ -57,7 +57,8 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
    */
   const generateMonthOptions = () => {
     if (availableMonths.length > 0) {
-      return availableMonths.map(month => ({
+      // 仅影响下拉列表显示顺序，不改变 availableMonths 原始顺序
+      return availableMonths.slice().reverse().map(month => ({
         value: month,
         label: formatMonthLabel(month)
       }));
@@ -76,7 +77,8 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
       });
     }
     
-    return options;
+    // 使生成的月份按时间升序（最早→最新）展示
+    return options.reverse();
   };
 
   /**
@@ -112,11 +114,11 @@ export const MonthSelector: React.FC<MonthSelectorProps> = ({
       {/* 自定义下拉箭头 */}
       <div className={cn(
         "absolute inset-y-0 right-0 flex items-center pointer-events-none",
-        isTouchDevice ? "pr-4" : "pr-3"
+        "pr-3"
       )}>
         <ChevronDown className={cn(
           "text-slate-400",
-          isTouchDevice ? "w-5 h-5" : "w-4 h-4"
+          "w-4 h-4"
         )} />
       </div>
     </div>
