@@ -539,7 +539,7 @@ export const SalaryCharts: React.FC<SalaryChartsProps> = ({ recordId }) => {
                       ? "h-80 lg:h-96" 
                       : "h-64 sm:h-80 lg:h-96"
                   )}>
-                    <ResponsiveContainer width="100%" height="100%" margin={{ top: 40, right: 30, bottom: 20, left: 20 }}>
+                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart margin={{ 
                         top: isTouchDevice ? 80 : 70, 
                         right: isTouchDevice ? 120 : 100, 
