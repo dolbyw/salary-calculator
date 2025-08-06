@@ -134,17 +134,47 @@ const App: React.FC = () => {
                      className={cn(
                        'rounded-full transition-all duration-300 transform-gpu flex items-center justify-center',
                        'active:scale-90 touch-manipulation',
-                       isMobile ? 'w-8 h-6 text-xs px-2' : 'w-2.5 h-2.5',
-                       isActive 
-                         ? cn(colors.indicator.active, 'scale-125 shadow-sm')
-                         : cn(colors.indicator.inactive, 'hover:scale-110'),
-                       !isActive && `hover:${colors.indicator.hover}`
+                       isMobile ? 'px-4 py-2 text-xs min-w-[3.5rem] h-8' : 'w-2.5 h-2.5',
+                       // 根据页面类型设置对应颜色
+                       page === 'calculator' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 hover:from-blue-200 hover:to-blue-300'
+                       ),
+                       page === 'history' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-700 hover:from-emerald-200 hover:to-emerald-300'
+                       ),
+                       page === 'settings' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-pink-100 to-pink-200 text-pink-700 hover:from-pink-200 hover:to-pink-300'
+                       ),
+                       // 黑夜模式下的颜色
+                       isDark && page === 'calculator' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-blue-800/60 to-blue-900/60 text-blue-200 hover:from-blue-700/60 hover:to-blue-800/60'
+                       ),
+                       isDark && page === 'history' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-emerald-800/60 to-emerald-900/60 text-emerald-200 hover:from-emerald-700/60 hover:to-emerald-800/60'
+                       ),
+                       isDark && page === 'settings' && (
+                         isActive 
+                           ? 'bg-gradient-to-r from-pink-600 to-pink-700 text-white shadow-sm'
+                           : 'bg-gradient-to-r from-pink-800/60 to-pink-900/60 text-pink-200 hover:from-pink-700/60 hover:to-pink-800/60'
+                       )
                      )}
                      aria-label={`切换到${pageLabels[page]}页面`}
                    >
                      {isMobile && (
-                       <span className="text-xs font-medium">
-                         {pageLabels[page].slice(0, 2)}
+                       <span className="text-xs font-medium whitespace-nowrap">
+                         {pageLabels[page] === '计算器' ? '计算' : 
+                          pageLabels[page] === '历史记录' ? '历史' : 
+                          '设置'}
                        </span>
                      )}
                    </button>

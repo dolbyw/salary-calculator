@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useConfirmDialog } from './useConfirmDialog';
 
@@ -21,88 +21,71 @@ export const usePWA = () => {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
   const { showConfirm, dialogState, closeDialog } = useConfirmDialog();
 
   // 检测PWA安装状态的回调函数
   const checkIfInstalled = useCallback(() => {
-    // 主要检测方法：display-mode standalone
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    
-    // iOS Safari检查
     const isIOSStandalone = (window.navigator as any).standalone === true;
-    
-    // 检查localStorage中的安装标记
     const hasInstallFlag = localStorage.getItem('pwa-installed') === 'true';
-    
-    // 综合判断（简化逻辑，提高准确性）
     const installed = isStandalone || isIOSStandalone || hasInstallFlag;
-    
-    // 更新状态
+
     setIsInstalled(installed);
-    
-    // 如果检测到已安装，设置localStorage标记
+
     if (installed && !hasInstallFlag) {
       localStorage.setItem('pwa-installed', 'true');
       localStorage.setItem('pwa-install-time', Date.now().toString());
     }
-    
+
     if (import.meta.env.DEV) {
       console.log('🔍 PWA安装状态检查:', {
         isStandalone,
         isIOSStandalone,
         hasInstallFlag,
         installed,
-        userAgent: navigator.userAgent.substring(0, 100)
+        userAgent: navigator.userAgent.substring(0, 100),
       });
     }
-    
     return installed;
   }, []);
 
-  // 检测浏览器是否支持PWA安装
-  const checkInstallSupport = useCallback(() => {
+  // 使用 useMemo 优化 canInstall 的计算
+  const canInstall = useMemo(() => {
     const userAgent = navigator.userAgent.toLowerCase();
-    
-    // 基础PWA支持检测
     const hasServiceWorker = 'serviceWorker' in navigator;
     const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
-    
-    // 浏览器和设备检测
     const isChrome = userAgent.includes('chrome') && !userAgent.includes('edg');
     const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
     const isEdge = userAgent.includes('edg');
     const isIOS = /iphone|ipad|ipod/i.test(userAgent);
     const isAndroid = userAgent.includes('android');
     const isMobile = isIOS || isAndroid;
-    
-    // PWA安装支持判断（简化逻辑）
-    const browserSupportsInstall = 
-      (isChrome && (isAndroid || !isMobile)) ||  // Chrome on Android/Desktop
-      (isSafari && isIOS) ||                    // Safari on iOS
-      (isEdge && !isMobile);                    // Edge on Desktop
-    
-    const canInstallPWA = hasServiceWorker && hasManifest && browserSupportsInstall && !checkIfInstalled();
-    setCanInstall(canInstallPWA);
-    
+
+    const browserSupportsInstall =
+      (isChrome && (isAndroid || !isMobile)) ||
+      (isSafari && isIOS) ||
+      (isEdge && !isMobile);
+
+    const canInstallPWA = hasServiceWorker && hasManifest && browserSupportsInstall && !isInstalled;
+
     if (import.meta.env.DEV) {
       console.log('PWA安装支持检查:', {
         hasServiceWorker,
         hasManifest,
         browserSupportsInstall,
         canInstallPWA,
+        isInstalled,
         browser: isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Other',
-        platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop'
+        platform: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop',
       });
     }
-    
+
     return canInstallPWA;
-  }, [checkIfInstalled]);
+  }, [isInstalled]);
 
   useEffect(() => {
     // 初始化检查
     checkIfInstalled();
-    checkInstallSupport();
 
     // 监听安装提示事件
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -125,10 +108,9 @@ export const usePWA = () => {
       console.log('✅ PWA安装完成事件:', e);
       
       // 立即更新所有相关状态
-      setIsInstalled(true);
-      setIsInstallable(false);
-      setCanInstall(false);
-      setDeferredPrompt(null);
+        setIsInstalled(true);
+        setIsInstallable(false);
+        setDeferredPrompt(null);
       
       // 设置安装标记到localStorage
       const currentTime = Date.now().toString();
@@ -179,16 +161,7 @@ export const usePWA = () => {
     // 监听显示模式变化
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     mediaQuery.addEventListener('change', handleDisplayModeChange);
-    
-    // 延迟初始检查，确保页面完全加载
-    const initialCheckTimeout = setTimeout(() => {
-      if (import.meta.env.DEV) {
-        console.log('🚀 执行初始PWA状态检查');
-      }
-      checkIfInstalled();
-      checkInstallSupport();
-    }, 1000);
-    
+
     // 检查Service Worker更新
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', handleSWUpdate);
@@ -213,13 +186,13 @@ export const usePWA = () => {
       
       mediaQuery.removeEventListener('change', handleDisplayModeChange);
       
-      clearTimeout(initialCheckTimeout);
+
       
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('controllerchange', handleSWUpdate);
       }
     };
-  }, [checkIfInstalled, checkInstallSupport, canInstall, deferredPrompt, isInstalled]);
+  }, [checkIfInstalled, deferredPrompt, isInstalled, canInstall]);
 
   /**
    * 触发PWA安装
@@ -244,7 +217,6 @@ export const usePWA = () => {
           // 模拟安装状态变化
           setIsInstalled(true);
           setIsInstallable(false);
-          setCanInstall(false);
           
           // 设置localStorage标记
           localStorage.setItem('pwa-installed', 'true');
@@ -253,7 +225,6 @@ export const usePWA = () => {
           // 延迟重新检查状态
           setTimeout(() => {
             checkIfInstalled();
-            checkInstallSupport();
           }, 500);
           
           console.log('🔧 开发环境：模拟PWA安装完成');
@@ -284,12 +255,10 @@ export const usePWA = () => {
         setTimeout(() => {
           setIsInstalled(true);
           setIsInstallable(false);
-          setCanInstall(false);
           localStorage.setItem('pwa-installed', 'true');
           
           // 强制重新检查状态
           checkIfInstalled();
-          checkInstallSupport();
         }, 1000);
       } else {
         console.log('❌ 用户拒绝了PWA安装');
@@ -344,20 +313,18 @@ export const usePWA = () => {
     // 重置状态
     setIsInstalled(false);
     setIsInstallable(false);
-    setCanInstall(false);
     setDeferredPrompt(null);
     
     // 重新检查状态
     setTimeout(() => {
       checkIfInstalled();
-      checkInstallSupport();
     }, 100);
     
     console.log('🔄 PWA状态已重置');
     toast.success('PWA状态已重置', {
       duration: 2000
     });
-  }, [checkIfInstalled, checkInstallSupport]);
+  }, [checkIfInstalled]);
 
   /**
    * 更新Service Worker

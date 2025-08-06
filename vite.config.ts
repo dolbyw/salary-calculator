@@ -20,7 +20,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: [
         'favicon.svg',
-        'apple-touch-icon.svg', 
+        'apple-touch-icon-180x180.png',
         'icon.svg',
         'pwa-192x192.png',
         'pwa-512x512.png'
@@ -38,6 +38,11 @@ export default defineConfig({
         lang: 'zh-CN',
         categories: ['productivity', 'finance', 'utilities'],
         icons: [
+          {
+            src: 'apple-touch-icon-180x180.png',
+            sizes: '180x180',
+            type: 'image/png'
+          },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',

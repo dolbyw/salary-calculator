@@ -240,19 +240,46 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
    * 获取导航项样式 - 使用useMemo优化
    */
   /**
-   * 获取导航项样式 - 修复useMemo依赖数组，确保主题切换时立即更新
+   * 获取导航项样式 - 根据页面类型设置对应颜色，支持白天和黑夜模式
    */
   const getItemStyles = useMemo(() => {
     return (itemId: string) => {
       const isActive = currentPage === itemId;
       
-      if (isActive) {
-        return `bg-gradient-to-br ${colors.navigation.activeItem} text-white`;
+      // 根据页面类型设置对应颜色
+      const colorStyles = {
+        calculator: isActive 
+          ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30'
+          : 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 hover:from-purple-200 hover:to-purple-300',
+        history: isActive 
+          ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30'
+          : 'bg-gradient-to-br from-green-100 to-green-200 text-green-700 hover:from-green-200 hover:to-green-300',
+        settings: isActive 
+          ? 'bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30'
+          : 'bg-gradient-to-br from-pink-100 to-pink-200 text-pink-700 hover:from-pink-200 hover:to-pink-300',
+      };
+
+      // 黑夜模式下的颜色
+      const darkColorStyles = {
+        calculator: isActive 
+          ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-600/30'
+          : 'bg-gradient-to-br from-purple-800/60 to-purple-900/60 text-purple-200 hover:from-purple-700/60 hover:to-purple-800/60',
+        history: isActive 
+          ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-lg shadow-green-600/30'
+          : 'bg-gradient-to-br from-green-800/60 to-green-900/60 text-green-200 hover:from-green-700/60 hover:to-green-800/60',
+        settings: isActive 
+          ? 'bg-gradient-to-br from-pink-600 to-pink-700 text-white shadow-lg shadow-pink-600/30'
+          : 'bg-gradient-to-br from-pink-800/60 to-pink-900/60 text-pink-200 hover:from-pink-700/60 hover:to-pink-800/60',
+      };
+
+      // 返回对应的颜色样式
+      if (isDark) {
+        return darkColorStyles[itemId as keyof typeof darkColorStyles] || colorStyles[itemId as keyof typeof colorStyles];
       }
       
-      return `${colors.navigation.inactiveItem} ${colors.navigation.hoverItem}`;
+      return colorStyles[itemId as keyof typeof colorStyles];
     };
-  }, [currentPage, colors.navigation.activeItem, colors.navigation.inactiveItem, colors.navigation.hoverItem]);
+  }, [currentPage, isDark]);
 
   if (!shouldRender) {
     return null;

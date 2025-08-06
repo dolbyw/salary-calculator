@@ -52,7 +52,7 @@ export const ClayInput: React.FC<ClayInputProps> = ({
     // 触屏设备优化
     isTouchDevice ? [
       // 更大的触摸目标
-      isMobile ? 'px-4 py-4 text-base min-h-[48px] rounded-2xl' : 'px-4 py-3 text-base min-h-[44px] rounded-xl',
+      isMobile ? 'px-4 py-3 text-base min-h-[44px] rounded-2xl' : 'px-4 py-3 text-base min-h-[44px] rounded-xl',
       'touch-manipulation', // 优化触屏响应
       'selection:bg-blue-200', // 优化文本选择
       // 触屏聚焦效果
